@@ -1,0 +1,33 @@
+---
+import Base from '../../layouts/Base.astro';
+import EntryList from '../../components/EntryList.astro';
+import { getPosts } from '../../lib/entries';
+import { PILLARS, PILLAR_LABEL } from '../../lib/pillars';
+
+const posts = await getPosts();
+
+// Filtering is static: each chip is a real page. No client JS, and every
+// filtered view is crawlable.
+const filters = PILLARS.filter((pillar) => posts.some((post) => post.data.pillar === pillar));
+const href = (pillar: string) =>
+  pillar === 'koz-sogligi' ? '/koz-sogligi' : `/yozuvlar/mavzu/${pillar}`;
+---
+
+<Base
+  title="Yozuvlar"
+  description="Malika Bobonazarovaning barcha yozuvlari: kundalik, kitoblar, oʻqish va koʻz sogʻligʻi."
+>
+  <div class="shell page-head">
+    <h1>Yozuvlar</h1>
+    <p>Hammasi bir joyda, eng yangisidan boshlab.</p>
+  </div>
+
+  <section class="shell section" style="margin-top:0">
+    <nav class="filters" aria-label="Mavzu boʻyicha saralash">
+      <span class="pillar-chip" aria-current="page">Barchasi</span>
+      {filters.map((pillar) => <a class="pillar-chip" href={href(pillar)}>{PILLAR_LABEL[pillar]}</a>)}
+    </nav>
+
+    <EntryList entries={posts} />
+  </section>
+</Base>

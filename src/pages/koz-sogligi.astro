@@ -1,0 +1,30 @@
+---
+import Base from '../layouts/Base.astro';
+import EntryList from '../components/EntryList.astro';
+import MedicalNotice from '../components/MedicalNotice.astro';
+import { getPosts, getNotes } from '../lib/entries';
+import { PILLAR_BLURB } from '../lib/pillars';
+
+const posts = await getPosts();
+const notes = await getNotes();
+const entries = [...posts, ...notes]
+  .filter((entry) => entry.data.pillar === 'koz-sogligi')
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+---
+
+<Base title="Koʻz sogʻligʻi" description={PILLAR_BLURB['koz-sogligi']}>
+  <div class="shell page-head">
+    <h1>Koʻz sogʻligʻi</h1>
+    <p>
+      Koʻz haqida oddiy tilda. Bu boʻlim kichik va sekin oʻsadi — har bir yozuv manbalar
+      bilan tekshiriladi.
+    </p>
+  </div>
+
+  <section class="shell section" style="margin-top:0">
+    {/* Standing notice, above the list, on every visit. */}
+    <MedicalNotice standing />
+
+    <EntryList entries={entries} emptyText="Bu boʻlimda hali yozuv yoʻq." />
+  </section>
+</Base>

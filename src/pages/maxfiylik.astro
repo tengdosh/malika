@@ -1,0 +1,59 @@
+---
+import Base from '../layouts/Base.astro';
+import { SITE } from '../lib/site.js';
+---
+
+<Base
+  title="Maxfiylik"
+  description="Bu sayt qanday maʼlumot yigʻadi va yigʻmaydi — qisqa va aniq."
+>
+  <div class="shell page-head">
+    <h1>Maxfiylik</h1>
+    <p>Qisqa qilib: bu sayt siz haqingizda shaxsiy maʼlumot saqlamaydi.</p>
+  </div>
+
+  <div class="shell" style="padding-bottom:clamp(3rem,7vw,5rem)">
+    <div class="prose">
+      <h2>Nima yigʻilmaydi</h2>
+      <p>
+        Bu saytda roʻyxatdan oʻtish, izoh qoldirish yoki forma toʻldirish imkoniyati yoʻq.
+        Ismingiz, elektron pochtangiz yoki telefon raqamingiz soʻralmaydi va saqlanmaydi.
+      </p>
+      <p>
+        Reklama tarmoqlari, kuzatuv piksellari va uchinchi tomon skriptlari ishlatilmaydi.
+      </p>
+
+      <h2>Statistika</h2>
+      <p>
+        Nechta odam sahifani ochganini bilish uchun cookie ishlatmaydigan, Yevropa Ittifoqida
+        joylashgan statistika xizmatidan foydalanaman. U alohida tashrif buyuruvchini
+        aniqlamaydi va IP manzilni saqlamaydi. Menga faqat umumiy raqamlar koʻrinadi:
+        qaysi sahifa necha marta ochilgan.
+      </p>
+
+      <h2>Cookie fayllar</h2>
+      <p>
+        Sayt cookie ishlatmaydi. Tanlagan matn oʻlchamingiz va yorugʻ/qorongʻi rejim
+        brauzeringizning oʻzida (<code>localStorage</code>) saqlanadi va hech qayerga
+        yuborilmaydi. Brauzer maʼlumotlarini tozalasangiz, u ham oʻchadi.
+      </p>
+
+      <h2>Tashqi havolalar</h2>
+      <p>
+        Telegram va boshqa tashqi havolalarni bossangiz, oʻsha xizmatlarning oʻz maxfiylik
+        qoidalari amal qiladi. Men ular ustidan nazoratga ega emasman.
+      </p>
+
+      <h2>Sogʻliq haqidagi yozuvlar</h2>
+      <p>
+        Saytdagi sogʻliq haqidagi yozuvlar umumiy maʼrifiy maqsadda yozilgan. Ular tashxis
+        yoki davolash tavsiyasi emas va shifokor koʻrigining oʻrnini bosmaydi.
+      </p>
+
+      <h2>Savolingiz boʻlsa</h2>
+      <p>
+        Menga <a href={SITE.telegram} rel="noopener">Telegram</a> orqali yozishingiz mumkin.
+      </p>
+    </div>
+  </div>
+</Base>

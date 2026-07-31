@@ -1,0 +1,46 @@
+---
+import type { GetStaticPaths } from 'astro';
+import Base from '../../../layouts/Base.astro';
+import EntryList from '../../../components/EntryList.astro';
+import { getPosts } from '../../../lib/entries';
+import { PILLARS, PILLAR_LABEL, PILLAR_BLURB, type Pillar } from '../../../lib/pillars';
+
+/**
+ * koz-sogligi is deliberately absent: it has its own /koz-sogligi index with a
+ * standing medical notice, and two URLs for the same list would be duplicate content.
+ */
+export const getStaticPaths = (async () => {
+  const posts = await getPosts();
+  return PILLARS.filter((pillar) => pillar !== 'koz-sogligi').map((pillar) => ({
+    params: { pillar },
+    props: { pillar, entries: posts.filter((post) => post.data.pillar === pillar) },
+  }));
+}) satisfies GetStaticPaths;
+
+const { pillar, entries } = Astro.props as {
+  pillar: Pillar;
+  entries: Awaited<ReturnType<typeof getPosts>>;
+};
+
+const label = PILLAR_LABEL[pillar];
+const others = PILLARS.filter((p) => p !== pillar && p !== 'koz-sogligi');
+---
+
+<Base title={label} description={PILLAR_BLURB[pillar]}>
+  <div class="shell page-head">
+    <h1>{label}</h1>
+    <p>{PILLAR_BLURB[pillar]}</p>
+  </div>
+
+  <section class="shell section" style="margin-top:0">
+    <nav class="filters" aria-label="Mavzu boʻyicha saralash">
+      <a class="pillar-chip" href="/yozuvlar">Barchasi</a>
+      {others.map((other) => (
+        <a class="pillar-chip" href={`/yozuvlar/mavzu/${other}`}>{PILLAR_LABEL[other]}</a>
+      ))}
+      <a class="pillar-chip" href="/koz-sogligi">{PILLAR_LABEL['koz-sogligi']}</a>
+    </nav>
+
+    <EntryList entries={entries} emptyText="Bu mavzuda hali yozuv yoʻq." />
+  </section>
+</Base>

@@ -1,0 +1,108 @@
+---
+import { getEntry } from 'astro:content';
+import { Image } from 'astro:assets';
+
+import Base from '../layouts/Base.astro';
+import PreloadImage from '../components/PreloadImage.astro';
+import Signature from '../components/Signature.astro';
+import NowStrip from '../components/NowStrip.astro';
+import FeaturedEntry from '../components/FeaturedEntry.astro';
+import EntryRow from '../components/EntryRow.astro';
+import ReadingCard from '../components/ReadingCard.astro';
+import TelegramCta from '../components/TelegramCta.astro';
+import { getPosts, splitFeatured } from '../lib/entries';
+import { personJsonLd } from '../lib/jsonld';
+import { SITE } from '../lib/site.js';
+
+const posts = await getPosts();
+const { featured, rest } = splitFeatured(posts);
+const rows = rest.slice(0, 6);
+
+const about = await getEntry('site', 'men-haqimda');
+const now = await getEntry('site', 'now');
+const reading = await getEntry('site', 'reading');
+
+const portrait = about?.data.portrait;
+const book = reading?.data.book;
+
+// The hero portrait is the LCP element on this page.
+const PORTRAIT_WIDTHS = [320, 640];
+const PORTRAIT_SIZES = '(min-width: 52rem) 20rem, min(100vw, 20rem)';
+---
+
+<Base title={SITE.name} jsonLd={[personJsonLd()]}>
+  {portrait && (
+    <Fragment slot="head">
+      <PreloadImage src={portrait} widths={PORTRAIT_WIDTHS} sizes={PORTRAIT_SIZES} />
+    </Fragment>
+  )}
+  {/* 2 — Hero. The site's only entrance animation lives here. */}
+  <section class="shell hero">
+    <div class="hero__grid">
+      {
+        portrait && (
+          <div class="hero__portrait rise rise-1">
+            <Image
+              src={portrait}
+              widths={PORTRAIT_WIDTHS}
+              sizes={PORTRAIT_SIZES}
+              alt={about?.data.portraitAlt ?? ''}
+              loading="eager"
+              fetchpriority="high"
+              decoding="async"
+            />
+          </div>
+        )
+      }
+
+      <div>
+        <h1 class="rise rise-2">Salom, men <em>Malika</em>.</h1>
+
+        <p class="rise rise-3">
+          Toshkentda yashayman. Davolash ishi yoʻnalishini endigina tugatdim va oftalmologiya
+          boʻyicha ordinaturaga tayyorlanyapman.
+        </p>
+
+        <p class="rise rise-4">
+          Bu sayt — mening kundaligim. Kunlarim, kitoblarim, oʻqish va yoʻldagi kichik
+          gʻalabalarim haqida yozaman. Koʻpincha shifokorlik haqida emas.
+        </p>
+
+        <div class="rise rise-5">
+          <Signature />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {/* 3 — Hozir strip */}
+  {now?.data.strip && <NowStrip text={now.data.strip} />}
+
+  {/* 4 — Soʻnggi yozuvlar: one featured entry, then rows. */}
+  <section class="shell section" aria-labelledby="songgi">
+    <div class="section-head">
+      <h2 id="songgi">Soʻnggi yozuvlar</h2>
+      <a class="more" href="/yozuvlar">Barcha yozuvlar</a>
+    </div>
+
+    {featured && <FeaturedEntry entry={featured} />}
+
+    {
+      rows.length > 0 && (
+        <ul class="entries" style="margin-top:clamp(2rem,5vw,3rem)">
+          {rows.map((entry) => (
+            <li>
+              <EntryRow entry={entry} />
+            </li>
+          ))}
+        </ul>
+      )
+    }
+  </section>
+
+  {/* 5 — Hozir oʻqiyapman */}
+  {book && <ReadingCard book={book} />}
+
+  {/* 6 — Telegram */}
+  <TelegramCta />
+</Base>

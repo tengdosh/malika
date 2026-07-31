@@ -1,0 +1,29 @@
+---
+import Base from '../../layouts/Base.astro';
+import EntryList from '../../components/EntryList.astro';
+import { getNotes } from '../../lib/entries';
+
+// Already sorted by last updated — notes keep changing, so a publish date would lie.
+const notes = await getNotes();
+---
+
+<Base
+  title="Qaydlar"
+  description="Oʻsib boradigan qaydlar: oʻrganganlarim, sxemalar va oʻzim uchun yozib qoʻyganlarim."
+>
+  <div class="shell page-head">
+    <h1>Qaydlar</h1>
+    <p>
+      Bular tugallangan yozuvlar emas. Ular oʻsib boradi: yangi narsa oʻrgansam, shu yerga
+      qoʻshaman.
+    </p>
+  </div>
+
+  <section class="shell section" style="margin-top:0">
+    <EntryList
+      entries={notes}
+      evergreenLabel
+      emptyText="Hozircha qayd yoʻq — tez orada qoʻshaman."
+    />
+  </section>
+</Base>
