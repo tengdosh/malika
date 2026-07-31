@@ -1,4 +1,4 @@
-import { SITE } from './site.js';
+import { SITE, socialUrls } from './site.js';
 import type { Entry } from './entries';
 
 /** Stable @id so BlogPosting.author can reference the same Person everywhere. */
@@ -6,13 +6,17 @@ export const PERSON_ID = `${SITE.origin}/#malika`;
 
 /** Kept light on purpose — she is a person, not an institution. */
 export function personJsonLd(): Record<string, unknown> {
+  // sameAs is omitted entirely when no handle is configured. An empty array is
+  // meaningless markup, and a guessed URL is an identity claim about a stranger.
+  const sameAs = socialUrls();
+
   return {
     '@context': 'https://schema.org',
     '@type': 'Person',
     '@id': PERSON_ID,
     name: SITE.name,
     url: SITE.origin,
-    sameAs: [SITE.telegram, SITE.instagram],
+    ...(sameAs.length > 0 && { sameAs }),
   };
 }
 

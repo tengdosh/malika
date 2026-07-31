@@ -1,12 +1,20 @@
 ---
-import { SITE } from '../lib/site.js';
+import { SOCIAL } from '../lib/site.js';
+
+// TODO(social): renders nothing until a real Telegram handle exists. A subscribe
+// block with a dead button is worse than no subscribe block.
+const telegram = SOCIAL.telegram;
 ---
 
-<!-- A plain outbound link. No form, no newsletter, no lead capture. -->
-<section class="shell section">
-  <div class="cta">
-    <h2>Yangi yozuvlardan xabardor boʻling</h2>
-    <p>Har bir yangi yozuvni Telegram kanalimga qoʻyaman. Boshqa hech narsa yubormayman.</p>
-    <a class="button" href={SITE.telegram} rel="noopener">Telegram kanalim</a>
-  </div>
-</section>
+{
+  /* A plain outbound link. No form, no newsletter, no lead capture. */
+  telegram && (
+    <section class="shell section">
+      <div class="cta">
+        <h2>Yangi yozuvlardan xabardor boʻling</h2>
+        <p>Har bir yangi yozuvni Telegram kanalimga qoʻyaman. Boshqa hech narsa yubormayman.</p>
+        <a class="button" href={telegram} rel="noopener">Telegram kanalim</a>
+      </div>
+    </section>
+  )
+}

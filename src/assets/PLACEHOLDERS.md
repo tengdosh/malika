@@ -23,5 +23,14 @@ Two more placeholders live outside this folder:
 - **Byline avatar** — `src/components/Byline.astro` renders the letter M.
 - **Open Graph card** — `public/og-default.png` (1200×630).
 
+## TODO(social)
+
+`SOCIAL.telegram` and `SOCIAL.instagram` in `src/lib/site.js` are **unset, not
+placeholder values** — a guessed handle is an identity claim about whoever owns
+that account. Until real handles land, the Telegram CTA, the footer social link
+and the `/maxfiylik` contact line all hide themselves, and `sameAs` is omitted
+from `Person` JSON-LD entirely rather than emitted empty. Set the two constants
+and everything reappears; nothing else needs changing.
+
 Alt text already describes the *intended* photograph, not the placeholder. When
 you swap an image, re-read its `coverAlt` and make sure it still matches.

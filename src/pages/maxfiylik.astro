@@ -1,6 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
-import { SITE } from '../lib/site.js';
+import { SOCIAL } from '../lib/site.js';
 ---
 
 <Base
@@ -51,9 +51,15 @@ import { SITE } from '../lib/site.js';
       </p>
 
       <h2>Savolingiz boʻlsa</h2>
-      <p>
-        Menga <a href={SITE.telegram} rel="noopener">Telegram</a> orqali yozishingiz mumkin.
-      </p>
+      {
+        SOCIAL.telegram ? (
+          <p>
+            Menga <a href={SOCIAL.telegram} rel="noopener">Telegram</a> orqali yozishingiz mumkin.
+          </p>
+        ) : (
+          <p>Bogʻlanish uchun havola tez orada shu yerda paydo boʻladi.</p>
+        )
+      }
     </div>
   </div>
 </Base>

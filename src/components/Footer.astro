@@ -1,5 +1,5 @@
 ---
-import { SITE } from '../lib/site.js';
+import { SITE, SOCIAL } from '../lib/site.js';
 
 const year = new Date().getFullYear();
 
@@ -31,7 +31,8 @@ const LINKS = [
     <nav aria-label="Saytning boshqa sahifalari">
       <ul class="footer__links">
         {LINKS.map((link) => <li><a href={link.href}>{link.label}</a></li>)}
-        <li><a href={SITE.telegram} rel="me noopener">Telegram</a></li>
+        {/* TODO(social): hidden until a real handle exists. */}
+        {SOCIAL.telegram && <li><a href={SOCIAL.telegram} rel="me noopener">Telegram</a></li>}
       </ul>
     </nav>
   </div>

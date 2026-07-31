@@ -9,9 +9,29 @@ export const SITE = {
   description:
     'Malika Bobonazarovaning shaxsiy blogi: kundalik, kitoblar, oʻqish va koʻz sogʻligʻi haqida.',
   locale: 'uz',
-  telegram: 'https://t.me/malikabobonazarova',
-  instagram: 'https://instagram.com/malikabobonazarova',
 };
+
+/**
+ * TODO(social): real handles not yet provided.
+ *
+ * Left genuinely unset rather than filled with a plausible guess. A wrong
+ * `sameAs` is worse than none — it can associate her with a stranger's account,
+ * and search engines treat it as an identity claim.
+ *
+ * Everything that consumes these hides itself when they are undefined: the
+ * Telegram CTA, the footer social link, the contact line on /maxfiylik, and the
+ * `sameAs` array in Person JSON-LD (omitted entirely, never emitted empty).
+ * The site is deployable as-is.
+ */
+export const SOCIAL = {
+  /** @type {string | undefined} */
+  telegram: undefined,
+  /** @type {string | undefined} */
+  instagram: undefined,
+};
+
+/** Only the handles that are actually configured, in a stable order. */
+export const socialUrls = () => [SOCIAL.telegram, SOCIAL.instagram].filter(Boolean);
 
 /** Pages axe + Lighthouse run against in CI. */
 export const AUDIT_ROUTES = ['/', '/yozuvlar/navbatchilikdan-keyin', '/men-haqimda'];
