@@ -221,6 +221,20 @@ label forcing the page wider than the viewport.
 > size — only `anywhere` does. Long Uzbek headings therefore widen any grid track
 > declared as bare `1fr`. Every track in this stylesheet uses `minmax(0, 1fr)`.
 
+### Behaviour
+
+`scripts/check-behaviour.mjs` proves the two things that are easy to claim and
+easy to get wrong:
+
+- theme and text size persist across reloads **and across pages**, and are
+  correct in the *first painted frame* — it hooks `requestAnimationFrame` before
+  anything paints and asserts the root attributes and computed styles are
+  already right, which is what "no flash" actually means;
+- `prefers-color-scheme` is respected on a first visit;
+- the hero animation runs by default (5 staggered elements) and **does not exist**
+  under `prefers-reduced-motion`, with the hero at opacity 1 and its content in
+  the DOM either way.
+
 ### Lighthouse
 
 Budget: Performance ≥ 95, Accessibility 100, Best Practices ≥ 95, SEO 100,

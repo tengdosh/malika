@@ -14,6 +14,7 @@
     "check:uzbek": "node scripts/check-uzbek.mjs",
     "check:glyphs": "node scripts/check-glyphs.mjs",
     "check:a11y": "node scripts/check-a11y.mjs",
+    "check:behaviour": "node scripts/check-behaviour.mjs",
     "check:lighthouse": "node scripts/check-lighthouse.mjs",
     "check:fixtures": "node scripts/check-fixtures.mjs",
     "check": "node scripts/check.mjs"
