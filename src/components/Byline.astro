@@ -1,0 +1,43 @@
+---
+import { SITE } from '../lib/site.js';
+import { formatDate, isoDate } from '../lib/format';
+
+interface Props {
+  date: Date;
+  updated?: Date;
+  reviewedBy?: string;
+  /** Notes show "Yangilanib boradi" rather than a publish date. */
+  evergreen?: boolean;
+}
+
+const { date, updated, reviewedBy, evergreen = false } = Astro.props;
+---
+
+<div class="byline">
+  <!-- TODO(portrait): replace with a real cropped avatar once photos exist. -->
+  <span class="byline__avatar" aria-hidden="true">M</span>
+
+  <div>
+    <p class="byline__name">{SITE.name}</p>
+    <p class="byline__line">
+      {SITE.credential}
+      {' · '}
+      {
+        evergreen ? (
+          <span>Yangilanib boradi</span>
+        ) : (
+          <time datetime={isoDate(date)}>{formatDate(date)}</time>
+        )
+      }
+      {
+        updated && (
+          <>
+            {' · yangilangan '}
+            <time datetime={isoDate(updated)}>{formatDate(updated)}</time>
+          </>
+        )
+      }
+    </p>
+    {reviewedBy && <p class="byline__reviewed">{reviewedBy} tomonidan koʻrib chiqilgan</p>}
+  </div>
+</div>

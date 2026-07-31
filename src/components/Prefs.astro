@@ -1,0 +1,59 @@
+---
+/**
+ * Text size + theme. These two controls are the reason the site ships any
+ * client JS at all; the wiring lives in Base.astro as a single inline script.
+ *
+ * Text size only scales UP (100% / 112.5% / 125%). Scaling below 100% would
+ * push --t-meta (13px) under the type floor, so there is no "smaller" step.
+ *
+ * The visible pressed state is driven by html[data-textsize] / html[data-theme]
+ * in CSS — set before first paint — so it is never wrong on screen. aria-pressed
+ * is synced by the same script for assistive tech.
+ */
+const SIZES = [
+  { key: 'md', label: 'Oddiy matn oʻlchami', cls: 'prefs__a-sm' },
+  { key: 'lg', label: 'Kattaroq matn', cls: 'prefs__a-md' },
+  { key: 'xl', label: 'Eng katta matn', cls: 'prefs__a-lg' },
+] as const;
+---
+
+<div class="prefs">
+  <div class="prefs__group" role="group" aria-label="Matn oʻlchami">
+    {
+      SIZES.map((size) => (
+        <button type="button" data-size={size.key} aria-pressed="false" aria-label={size.label}>
+          <span class={size.cls} aria-hidden="true">A</span>
+        </button>
+      ))
+    }
+  </div>
+
+  <div class="prefs__group">
+    <button type="button" data-theme-toggle aria-pressed="false" aria-label="Qorongʻi rejim">
+      <svg class="prefs__moon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z" stroke-linejoin="round"></path>
+      </svg>
+      <svg class="prefs__sun" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="4"></circle>
+        <path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4" stroke-linecap="round"></path>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<style is:global>
+  /* Active step, driven by the attribute the head script sets before paint. */
+  html[data-textsize='md'] .prefs button[data-size='md'],
+  html[data-textsize='lg'] .prefs button[data-size='lg'],
+  html[data-textsize='xl'] .prefs button[data-size='xl'] {
+    color: var(--plum);
+    background: var(--blush-soft);
+  }
+
+  html[data-textsize='lg'] { --base: 112.5%; }
+  html[data-textsize='xl'] { --base: 125%; }
+
+  .prefs__sun { display: none; }
+  html[data-theme='dark'] .prefs__moon { display: none; }
+  html[data-theme='dark'] .prefs__sun { display: block; }
+</style>

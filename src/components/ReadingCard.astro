@@ -1,0 +1,60 @@
+---
+import { Picture } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+interface Props {
+  book: {
+    title: string;
+    author: string;
+    startedOn: Date;
+    progress: number;
+    note: string;
+    cover?: ImageMetadata;
+    coverAlt?: string;
+  };
+}
+
+const { book } = Astro.props;
+const progress = Math.round(Math.max(0, Math.min(100, book.progress)));
+---
+
+<section class="shell section" aria-labelledby="oqiyapman">
+  <div class="reading">
+    {
+      book.cover && (
+        <div class="reading__cover">
+          <Picture
+            src={book.cover}
+            formats={['avif', 'webp']}
+            widths={[128, 256]}
+            sizes="8rem"
+            alt={book.coverAlt ?? ''}
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+      )
+    }
+
+    <div>
+      <span class="reading__label" id="oqiyapman">Hozir oʻqiyapman</span>
+      <h3>{book.title}</h3>
+      <p class="reading__author">{book.author}</p>
+      <p class="reading__note">{book.note}</p>
+
+      <div class="reading__progress">
+        <div
+          class="reading__track"
+          role="progressbar"
+          aria-valuenow={progress}
+          aria-valuemin="0"
+          aria-valuemax="100"
+          aria-label="Kitobning oʻqilgan qismi"
+        >
+          <div class="reading__fill" style={`width:${progress}%`}></div>
+        </div>
+        <p class="reading__pct">{progress}% oʻqildi</p>
+      </div>
+    </div>
+  </div>
+</section>

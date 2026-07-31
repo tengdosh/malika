@@ -1,0 +1,619 @@
+@import './fonts.css';
+@import './tokens.css';
+
+/* ---------------------------------------------------------------- reset */
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+* { margin: 0; }
+
+html {
+  /* Set by the text-size control; restored before first paint by the inline
+     head script so there is no flash of the wrong size. */
+  font-size: var(--base);
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: var(--t-body);
+  line-height: 1.65;
+  font-synthesis-weight: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-wrap: break-word;
+}
+
+/* Flex items default to min-width:auto, so a single wide grid track deep inside
+   <main> would stretch the whole column past the viewport and produce horizontal
+   scroll at large text sizes. */
+body > * { min-width: 0; }
+
+img, picture, svg { display: block; max-width: 100%; }
+input, button, textarea, select { font: inherit; color: inherit; }
+
+h1, h2, h3, h4 {
+  font-family: var(--display);
+  font-weight: 600;
+  line-height: 1.15;
+  text-wrap: balance;
+  letter-spacing: -0.005em;
+}
+
+p, li { text-wrap: pretty; }
+
+a { color: var(--plum); text-decoration-thickness: 1px; text-underline-offset: 0.18em; }
+a:hover { text-decoration-thickness: 2px; }
+
+/* Visible focus ring, per the accessibility criteria. Never removed. */
+:focus-visible {
+  outline: 2px solid var(--plum);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+::selection { background: var(--blush-soft); color: var(--ink); }
+
+/* ------------------------------------------------------------- helpers */
+
+.shell {
+  width: 100%;
+  max-width: 72rem;
+  margin-inline: auto;
+  padding-inline: var(--pad);
+}
+
+.prose-width { max-width: var(--measure); }
+
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--pad);
+  top: 0;
+  z-index: 50;
+  transform: translateY(-150%);
+  background: var(--plum);
+  color: var(--paper);
+  padding: 0.7rem 1.1rem;
+  border-radius: 0 0 0.6rem 0.6rem;
+  font-size: var(--t-small);
+  font-weight: 600;
+  text-decoration: none;
+}
+.skip-link:focus-visible { transform: translateY(0); }
+
+/* The arch: rounded top, tighter bottom corners. The one repeating shape.
+   Used on the portrait, entry thumbnails, chips, the Hozir block, the
+   reading card and the avatar — and nowhere else. */
+.arch { border-radius: var(--arch); }
+
+/* Section rhythm */
+.section { margin-block: clamp(3.25rem, 8vw, 5.5rem); }
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: clamp(1.5rem, 3vw, 2.25rem);
+}
+.section-head h2 { font-size: clamp(1.6rem, 3.6vw, 2.15rem); }
+.section-head .more {
+  font-size: var(--t-small);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.section-head .more:hover { text-decoration: underline; }
+
+/* ------------------------------------------------------------ masthead */
+
+.masthead {
+  border-bottom: 1px solid var(--line);
+  background: var(--paper);
+}
+.masthead__inner {
+  display: flex;
+  align-items: center;
+  gap: clamp(1rem, 3vw, 2rem);
+  flex-wrap: wrap;
+  padding-block: 1.15rem;
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--display);
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: none;
+  letter-spacing: -0.01em;
+  margin-right: auto;
+}
+/* The small lens dot. Decorative — a quiet nod, not a medical icon. */
+.wordmark__dot {
+  width: 0.62rem;
+  height: 0.62rem;
+  border-radius: 50%;
+  background: var(--blush);
+  box-shadow: 0 0 0 3px var(--blush-soft);
+  flex: none;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.9rem, 2.4vw, 1.6rem);
+}
+.nav a {
+  font-size: var(--t-small);
+  font-weight: 500;
+  color: var(--muted);
+  text-decoration: none;
+  padding-block: 0.35rem;
+  border-bottom: 2px solid transparent;
+}
+.nav a:hover { color: var(--ink); }
+.nav a[aria-current='page'] { color: var(--ink); border-bottom-color: var(--blush); }
+
+/* --------------------------------------------------- prefs (text/theme) */
+
+.prefs { display: flex; align-items: center; gap: 0.4rem; }
+.prefs__group {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.15rem;
+  background: var(--surface);
+}
+.prefs button {
+  min-width: 38px;
+  min-height: 38px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  border-radius: 999px;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: var(--t-meta);
+  font-weight: 600;
+  line-height: 1;
+  padding: 0 0.35rem;
+}
+.prefs button:hover { color: var(--ink); background: var(--blush-soft); }
+.prefs button[aria-pressed='true'] { color: var(--plum); background: var(--blush-soft); }
+.prefs__a-sm { font-size: var(--t-meta); }
+.prefs__a-md { font-size: var(--t-small); }
+.prefs__a-lg { font-size: 1rem; }
+.prefs svg { width: 1.05rem; height: 1.05rem; fill: none; stroke: currentColor; stroke-width: 1.7; }
+
+/* ---------------------------------------------------------------- hero */
+
+.hero { padding-block: clamp(2.5rem, 7vw, 4.5rem); }
+.hero__grid {
+  display: grid;
+  gap: clamp(1.75rem, 5vw, 3.5rem);
+  align-items: center;
+  /* minmax(0,...) everywhere: overflow-wrap:break-word does NOT reduce a track's
+     intrinsic min-content size, so a long Uzbek heading would otherwise widen
+     the track past the viewport. */
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (min-width: 52rem) {
+  .hero__grid { grid-template-columns: minmax(0, 22rem) minmax(0, 1fr); }
+}
+
+.hero__portrait {
+  position: relative;
+  width: min(100%, 20rem);
+  margin-inline: auto;
+}
+.hero__portrait img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  border-radius: var(--arch);
+  background: var(--surface);
+}
+/* A soft plate behind the portrait — background only, never text. */
+.hero__portrait::after {
+  content: '';
+  position: absolute;
+  /* Offset left, never right: a rightward bleed pushes past the viewport edge,
+     while the left side always has the page gutter to bleed into. */
+  inset: auto 1.5rem -0.75rem -0.75rem;
+  height: 62%;
+  background: var(--blush-soft);
+  border-radius: var(--arch);
+  z-index: -1;
+}
+
+.hero h1 {
+  font-size: clamp(2.1rem, 6.4vw, 3.35rem);
+  line-height: 1.08;
+  margin-bottom: 1.15rem;
+}
+.hero h1 em { font-style: italic; color: var(--plum); }
+.hero p {
+  max-width: 40ch;
+  color: var(--muted);
+  font-size: clamp(1.0625rem, 1.6vw, 1.15rem);
+}
+.hero p + p { margin-top: 0.9rem; }
+
+.signature { margin-top: 1.6rem; display: flex; align-items: center; gap: 0.6rem; }
+/* Caveat lives here and nowhere else. This element only ever contains "Malika". */
+.signature__name {
+  font-family: var(--hand);
+  font-size: 2.1rem;
+  line-height: 1;
+  color: var(--plum);
+  font-weight: 600;
+}
+.signature__rule { height: 1px; width: 3.5rem; background: var(--line); }
+
+/* ---------------------------------------------------------- hozir strip */
+
+.now-strip {
+  background: var(--blush-soft);
+  border-radius: var(--arch);
+  padding: clamp(1.5rem, 4vw, 2.25rem) clamp(1.5rem, 4vw, 2.75rem);
+  display: grid;
+  gap: 0.6rem;
+}
+.now-strip__label {
+  font-size: var(--t-meta);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--plum);
+}
+.now-strip p { font-size: clamp(1.0625rem, 1.9vw, 1.25rem); max-width: 54ch; }
+.now-strip__link {
+  font-size: var(--t-small);
+  font-weight: 600;
+  justify-self: start;
+  text-decoration: none;
+}
+.now-strip__link:hover { text-decoration: underline; }
+
+/* ------------------------------------------------------------- entries */
+
+.pillar-chip {
+  display: inline-block;
+  font-size: var(--t-meta);
+  font-weight: 600;
+  color: var(--plum);
+  background: var(--blush-soft);
+  padding: 0.28rem 0.7rem 0.3rem;
+  border-radius: 0.9rem 0.9rem 0.2rem 0.9rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+/* Hover inverts to the accent. --blush as the hover background failed AA in the
+   dark theme (ink on blush = 2.26:1); plum/paper passes in both (7.45 / 9.42). */
+a.pillar-chip:hover { background: var(--plum); color: var(--paper); }
+
+.badge-sourced {
+  display: inline-block;
+  font-size: var(--t-meta);
+  font-weight: 600;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  padding: 0.24rem 0.6rem 0.26rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* Featured entry — with a cover */
+.featured { display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(1.25rem, 3.5vw, 2.25rem); }
+@media (min-width: 46rem) {
+  .featured--with-cover { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: center; }
+}
+.featured__media img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 1.6rem 1.6rem 0.4rem 1.6rem;
+  background: var(--surface);
+}
+.featured__meta { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.85rem; }
+.featured h3 { font-size: clamp(1.65rem, 4vw, 2.4rem); line-height: 1.12; }
+.featured h3 a { color: inherit; text-decoration: none; }
+.featured h3 a:hover { color: var(--plum); }
+.featured__standfirst { color: var(--muted); margin-top: 0.75rem; max-width: 46ch; }
+.featured__date { display: block; margin-top: 1rem; font-size: var(--t-meta); color: var(--muted); }
+
+/* No cover: not an empty box — a deliberate text-only treatment.
+   More air, larger title, a rule instead of an image. */
+.featured--text-only {
+  border-top: 3px solid var(--blush);
+  padding-top: clamp(1.5rem, 4vw, 2.25rem);
+  max-width: 52ch;
+}
+.featured--text-only h3 { font-size: clamp(1.9rem, 5.2vw, 2.9rem); }
+.featured--text-only .featured__standfirst { font-size: 1.15rem; max-width: 44ch; }
+
+/* Entry rows — rows, not cards. Must stay legible at 200 posts. */
+.entries { list-style: none; padding: 0; display: grid; }
+.entries > li { border-top: 1px solid var(--line); }
+.entries > li:last-child { border-bottom: 1px solid var(--line); }
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  padding-block: clamp(1.25rem, 3vw, 1.75rem);
+  align-items: start;
+}
+/* The thumbnail gutter is a share of the row, not a rem length: at 200% text a
+   4.75rem gutter would eat two thirds of a phone screen and leave the title
+   unreadable. minmax(0,1fr) lets the title wrap instead of widening the track. */
+.row--with-thumb { grid-template-columns: 22% minmax(0, 1fr); }
+@media (min-width: 40rem) {
+  .row--with-thumb { grid-template-columns: 6.5rem minmax(0, 1fr); gap: 1.5rem; }
+}
+.row__thumb img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 2.2rem 2.2rem 0.35rem 2.2rem;
+  background: var(--surface);
+}
+.row__meta { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
+.row h3 { font-size: clamp(1.2rem, 2.6vw, 1.45rem); line-height: 1.25; }
+.row h3 a { color: inherit; text-decoration: none; }
+.row h3 a:hover { color: var(--plum); }
+.row p { color: var(--muted); font-size: var(--t-small); margin-top: 0.35rem; max-width: 58ch; }
+.row__date { font-size: var(--t-meta); color: var(--muted); white-space: nowrap; }
+
+/* ------------------------------------------------------- reading card */
+
+.reading {
+  background: var(--surface);
+  border-radius: var(--arch);
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+  display: grid;
+  gap: clamp(1.25rem, 3vw, 2rem);
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (min-width: 40rem) {
+  .reading { grid-template-columns: 7.5rem minmax(0, 1fr); align-items: center; }
+}
+.reading__cover img {
+  width: 100%;
+  max-width: 8rem;
+  height: auto;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  border-radius: 0.5rem 0.5rem 0.15rem 0.5rem;
+  background: var(--blush-soft);
+}
+.reading__label {
+  font-size: var(--t-meta);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--plum);
+  display: block;
+  margin-bottom: 0.55rem;
+}
+.reading h3 { font-size: clamp(1.3rem, 3vw, 1.6rem); }
+.reading__author { color: var(--muted); font-size: var(--t-small); margin-top: 0.2rem; }
+.reading__note { margin-top: 0.75rem; max-width: 46ch; }
+.reading__progress { margin-top: 1.15rem; display: grid; gap: 0.4rem; max-width: 22rem; }
+.reading__track { height: 0.5rem; border-radius: 999px; background: var(--blush-soft); overflow: hidden; }
+.reading__fill { height: 100%; background: var(--plum); border-radius: 999px; }
+.reading__pct { font-size: var(--t-meta); color: var(--muted); }
+
+/* --------------------------------------------------------------- CTA */
+
+.cta {
+  border: 1px solid var(--line);
+  border-radius: 1.4rem;
+  padding: clamp(1.75rem, 4vw, 2.75rem);
+  text-align: center;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+  justify-items: center;
+}
+.cta h2 { font-size: clamp(1.5rem, 3.4vw, 2rem); }
+.cta p { color: var(--muted); max-width: 44ch; }
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.7rem 1.5rem;
+  margin-top: 0.5rem;
+  background: var(--plum);
+  color: var(--paper);
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: var(--t-small);
+  text-decoration: none;
+  /* At 200% text the label is wider than a phone screen; let it wrap rather
+     than push the page into horizontal scroll. */
+  max-width: 100%;
+  text-align: center;
+}
+.button:hover { background: var(--ink); }
+
+/* ------------------------------------------------------------- footer */
+
+.footer {
+  margin-top: auto;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+  padding-block: clamp(2.25rem, 5vw, 3.25rem);
+}
+.footer__grid { display: grid; gap: 1.5rem; }
+@media (min-width: 46rem) {
+  .footer__grid { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 3rem; }
+}
+.footer__name { font-family: var(--display); font-size: 1.15rem; font-weight: 600; }
+.footer__credential { color: var(--muted); font-size: var(--t-small); margin-top: 0.25rem; }
+.footer__notice { color: var(--muted); font-size: var(--t-meta); margin-top: 1rem; max-width: 52ch; line-height: 1.55; }
+.footer__links { list-style: none; padding: 0; display: grid; gap: 0.55rem; align-content: start; }
+.footer__links a { font-size: var(--t-small); text-decoration: none; }
+.footer__links a:hover { text-decoration: underline; }
+.footer__copy { color: var(--muted); font-size: var(--t-meta); margin-top: 2rem; }
+
+/* ------------------------------------------------------------ article */
+
+.article { padding-block: clamp(2rem, 5vw, 3.25rem); }
+.article__head { max-width: var(--measure); }
+.article__meta { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.article h1 { font-size: clamp(2rem, 5.6vw, 3rem); line-height: 1.1; }
+.article__standfirst {
+  font-size: clamp(1.15rem, 2.2vw, 1.35rem);
+  color: var(--muted);
+  margin-top: 1rem;
+  max-width: 52ch;
+  line-height: 1.5;
+}
+/* Held to the text measure so the article reads as one column rather than a
+   wide banner sitting above a narrow body. */
+.article__cover { margin-block: clamp(1.75rem, 4vw, 2.5rem); max-width: var(--measure); }
+.article__cover img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 1.6rem 1.6rem 0.4rem 1.6rem;
+  background: var(--surface);
+}
+.article__cover figcaption { font-size: var(--t-meta); color: var(--muted); margin-top: 0.6rem; }
+
+.byline {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding-block: 1.25rem;
+  border-block: 1px solid var(--line);
+  margin-block: clamp(1.5rem, 3.5vw, 2.25rem);
+  max-width: var(--measure);
+  flex-wrap: wrap;
+}
+.byline__avatar {
+  width: 2.9rem; height: 2.9rem; flex: none;
+  border-radius: 1.2rem 1.2rem 0.2rem 1.2rem;
+  background: var(--blush-soft);
+  object-fit: cover;
+  display: grid; place-items: center;
+  font-family: var(--display); font-weight: 600; color: var(--plum);
+}
+.byline__name { font-weight: 600; font-size: var(--t-small); }
+.byline__line { font-size: var(--t-meta); color: var(--muted); margin-top: 0.1rem; }
+.byline__reviewed { font-size: var(--t-meta); color: var(--muted); margin-top: 0.25rem; }
+
+/* Prose */
+.prose { max-width: var(--measure); font-size: var(--t-body); }
+.prose > * + * { margin-top: 1.15em; }
+.prose h2 { font-size: clamp(1.45rem, 3.2vw, 1.85rem); margin-top: 2.1em; }
+.prose h3 { font-size: clamp(1.2rem, 2.6vw, 1.4rem); margin-top: 1.8em; }
+.prose ul, .prose ol { padding-left: 1.35rem; display: grid; gap: 0.45rem; }
+.prose li::marker { color: var(--blush); }
+.prose ol li::marker { color: var(--muted); font-size: var(--t-small); }
+.prose blockquote {
+  border-left: 3px solid var(--blush);
+  padding-left: 1.15rem;
+  color: var(--muted);
+  font-style: italic;
+}
+.prose strong { font-weight: 700; }
+.prose hr { border: 0; border-top: 1px solid var(--line); margin-block: 2.25em; }
+.prose img { border-radius: 1.2rem 1.2rem 0.3rem 1.2rem; }
+.prose code {
+  background: var(--surface);
+  padding: 0.1em 0.35em;
+  border-radius: 0.3rem;
+  font-size: 0.92em;
+}
+
+/* Sources + medical notice */
+.sources {
+  background: var(--surface);
+  border-radius: 1.1rem;
+  padding: clamp(1.25rem, 3vw, 1.75rem);
+  margin-top: clamp(2rem, 5vw, 3rem);
+  max-width: var(--measure);
+}
+.sources h2 { font-size: 1.15rem; margin-bottom: 0.85rem; }
+.sources ol { padding-left: 1.25rem; display: grid; gap: 0.6rem; }
+.sources li { font-size: var(--t-small); color: var(--muted); }
+.sources li cite { font-style: normal; color: var(--ink); }
+.sources a { word-break: break-word; }
+
+.notice {
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--plum);
+  border-radius: 0.4rem 1.1rem 1.1rem 0.4rem;
+  padding: clamp(1.1rem, 3vw, 1.5rem);
+  margin-top: clamp(1.5rem, 4vw, 2.25rem);
+  max-width: var(--measure);
+  font-size: var(--t-small);
+  line-height: 1.6;
+}
+.notice strong { color: var(--plum); }
+.notice--standing { margin-top: 0; margin-bottom: clamp(2rem, 4vw, 2.75rem); }
+
+/* ------------------------------------------------------- simple pages */
+
+.page-head { padding-block: clamp(2.25rem, 6vw, 3.5rem); max-width: var(--measure); }
+.page-head h1 { font-size: clamp(2rem, 5.4vw, 2.9rem); }
+.page-head p { color: var(--muted); margin-top: 0.85rem; font-size: 1.15rem; max-width: 48ch; }
+
+.filters { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: clamp(1.5rem, 3vw, 2rem); }
+
+.empty { color: var(--muted); padding-block: 2rem; }
+
+/* ---------------------------------------------------------- motion */
+
+/* The site's only entrance animation. Declared inside a no-preference query
+   so the default state is "visible": if motion is reduced — or if this rule is
+   never applied for any reason — content is fully rendered, not stuck at
+   opacity 0. Content is always in the DOM either way. */
+@media (prefers-reduced-motion: no-preference) {
+  .rise { animation: rise 800ms cubic-bezier(0.2, 0.7, 0.3, 1) both; }
+  .rise-1 { animation-delay: 50ms; }
+  .rise-2 { animation-delay: 120ms; }
+  .rise-3 { animation-delay: 200ms; }
+  .rise-4 { animation-delay: 270ms; }
+  .rise-5 { animation-delay: 400ms; }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(0.7rem); }
+    to { opacity: 1; transform: none; }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}

@@ -1,0 +1,86 @@
+---
+import { render } from 'astro:content';
+import { Picture, getImage } from 'astro:assets';
+
+import Base from './Base.astro';
+import PillarChip from '../components/PillarChip.astro';
+import Byline from '../components/Byline.astro';
+import PreloadImage from '../components/PreloadImage.astro';
+import SourceList from '../components/SourceList.astro';
+import MedicalNotice from '../components/MedicalNotice.astro';
+import { SITE } from '../lib/site.js';
+import { blogPostingJsonLd, medicalWebPageJsonLd } from '../lib/jsonld';
+import { entryHref, type Entry } from '../lib/entries';
+
+interface Props {
+  entry: Entry;
+}
+
+const { entry } = Astro.props;
+const { title, description, pillar, date, updated, cover, coverAlt, sources, reviewedBy, evergreen } =
+  entry.data;
+
+const { Content } = await render(entry);
+const url = new URL(entryHref(entry), SITE.origin).href;
+const isHealth = pillar === 'koz-sogligi';
+
+// Open Graph card: the post's own cover when it has one, else the site default.
+const ogImage = cover
+  ? (await getImage({ src: cover, width: 1200, height: 630, fit: 'cover', format: 'png' })).src
+  : '/og-default.png';
+
+const COVER_WIDTHS = [720, 1080, 1440];
+const COVER_SIZES = '(min-width: 72rem) 66rem, 92vw';
+
+const jsonLd = [
+  blogPostingJsonLd(entry, url, new URL(ogImage, SITE.origin).href),
+  ...(isHealth ? [medicalWebPageJsonLd(entry, url)] : []),
+];
+---
+
+<Base title={title} description={description} ogImage={ogImage} ogType="article" jsonLd={jsonLd}>
+  {cover && (
+    <Fragment slot="head">
+      <PreloadImage src={cover} widths={COVER_WIDTHS} sizes={COVER_SIZES} format="avif" />
+    </Fragment>
+  )}
+  <article class="shell article">
+    <header class="article__head">
+      <div class="article__meta">
+        <PillarChip pillar={pillar} />
+        {sources.length > 0 && <span class="badge-sourced">manbalar bilan</span>}
+      </div>
+
+      <h1>{title}</h1>
+      <p class="article__standfirst">{description}</p>
+    </header>
+
+    {
+      cover && (
+        <figure class="article__cover">
+          <Picture
+            src={cover}
+            formats={['avif', 'webp']}
+            widths={COVER_WIDTHS}
+            sizes={COVER_SIZES}
+            alt={coverAlt ?? ''}
+            loading="eager"
+            fetchpriority="high"
+            decoding="async"
+          />
+        </figure>
+      )
+    }
+
+    <Byline date={date} updated={updated} reviewedBy={reviewedBy} evergreen={evergreen} />
+
+    <div class="prose">
+      <Content />
+    </div>
+
+    <SourceList sources={sources} />
+
+    {/* Renders at the end of every koz-sogligi post. */}
+    {isHealth && <MedicalNotice />}
+  </article>
+</Base>

@@ -1,0 +1,21 @@
+---
+import { PILLAR_LABEL, type Pillar } from '../lib/pillars';
+
+interface Props {
+  pillar: Pillar;
+  /** Chips link to the filtered index unless this is false (e.g. inside a heading). */
+  link?: boolean;
+}
+
+const { pillar, link = true } = Astro.props;
+const label = PILLAR_LABEL[pillar];
+const href = pillar === 'koz-sogligi' ? '/koz-sogligi' : `/yozuvlar/mavzu/${pillar}`;
+---
+
+{
+  link ? (
+    <a class="pillar-chip" href={href}>{label}</a>
+  ) : (
+    <span class="pillar-chip">{label}</span>
+  )
+}

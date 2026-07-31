@@ -1,0 +1,29 @@
+---
+import Prefs from './Prefs.astro';
+import { SITE } from '../lib/site.js';
+
+const path = Astro.url.pathname.replace(/\/$/, '') || '/';
+
+const NAV = [
+  { href: '/yozuvlar', label: 'Yozuvlar' },
+  { href: '/qaydlar', label: 'Qaydlar' },
+  { href: '/men-haqimda', label: 'Men haqimda' },
+];
+
+const current = (href: string) => (path === href || path.startsWith(`${href}/`) ? 'page' : undefined);
+---
+
+<header class="masthead">
+  <div class="shell masthead__inner">
+    <a class="wordmark" href="/">
+      <span class="wordmark__dot" aria-hidden="true"></span>
+      {SITE.name}
+    </a>
+
+    <nav class="nav" aria-label="Asosiy menyu">
+      {NAV.map((item) => <a href={item.href} aria-current={current(item.href)}>{item.label}</a>)}
+    </nav>
+
+    <Prefs />
+  </div>
+</header>

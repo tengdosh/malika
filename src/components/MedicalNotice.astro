@@ -1,0 +1,26 @@
+---
+interface Props {
+  /** True on the /koz-sogligi index, where the notice stands above the list. */
+  standing?: boolean;
+}
+
+const { standing = false } = Astro.props;
+---
+
+<aside class:list={['notice', standing && 'notice--standing']}>
+  {
+    standing ? (
+      <p>
+        <strong>Eslatma.</strong> Bu boʻlimdagi yozuvlar umumiy maʼrifiy maqsadda yozilgan va
+        tashxis yoki davolash tavsiyasi emas. Sogʻligʻingiz boʻyicha qaror qabul qilishdan
+        oldin shifokorga murojaat qiling.
+      </p>
+    ) : (
+      <p>
+        <strong>Eslatma.</strong> Bu yozuv umumiy maʼrifiy maqsadda yozilgan va tashxis yoki
+        davolash tavsiyasi emas. Sogʻligʻingiz boʻyicha qaror qabul qilishdan oldin shifokorga
+        murojaat qiling.
+      </p>
+    )
+  }
+</aside>

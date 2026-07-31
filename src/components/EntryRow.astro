@@ -1,0 +1,54 @@
+---
+import { Picture } from 'astro:assets';
+import PillarChip from './PillarChip.astro';
+import { entryHref, type Entry } from '../lib/entries';
+import { formatDate, isoDate } from '../lib/format';
+
+interface Props {
+  entry: Entry;
+  /** Notes keep changing, so they show "Yangilanib boradi" instead of a date. */
+  evergreenLabel?: boolean;
+}
+
+const { entry, evergreenLabel = false } = Astro.props;
+const { title, description, pillar, date, cover, coverAlt } = entry.data;
+const href = entryHref(entry);
+
+// No cover: the row collapses to a single column with no thumbnail gutter.
+// A missing photo must never make a post look broken.
+const hasThumb = Boolean(cover);
+---
+
+<article class:list={['row', hasThumb && 'row--with-thumb']}>
+  {
+    cover && (
+      <a class="row__thumb" href={href} tabindex="-1" aria-hidden="true">
+        <Picture
+          src={cover}
+          formats={['avif', 'webp']}
+          widths={[104, 208]}
+          sizes="(min-width: 40rem) 6.5rem, 4.75rem"
+          alt={coverAlt ?? ''}
+          loading="lazy"
+          decoding="async"
+        />
+      </a>
+    )
+  }
+
+  <div>
+    <div class="row__meta">
+      <PillarChip pillar={pillar} />
+      {
+        evergreenLabel ? (
+          <span class="row__date">Yangilanib boradi</span>
+        ) : (
+          <time class="row__date" datetime={isoDate(date)}>{formatDate(date)}</time>
+        )
+      }
+    </div>
+
+    <h3><a href={href}>{title}</a></h3>
+    <p>{description}</p>
+  </div>
+</article>

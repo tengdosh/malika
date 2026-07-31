@@ -1,0 +1,173 @@
+---
+import Masthead from '../components/Masthead.astro';
+import Footer from '../components/Footer.astro';
+import { SITE } from '../lib/site.js';
+import { FONT_FILES } from '../../scripts/font-manifest.mjs';
+import '../styles/global.css';
+
+const PRELOAD_FONTS = FONT_FILES.filter((font) => font.preload);
+
+/**
+ * Pages with an above-the-fold image push a `head` slot containing a
+ * <link rel="preload" as="image">. Without it the LCP image is only discovered
+ * once the HTML is parsed, costing a full round trip (measured: 1807ms LCP on
+ * simulated 4G against a 755ms floor).
+ */
+interface Props {
+  title: string;
+  description?: string;
+  /** Absolute or site-relative URL of the Open Graph image. */
+  ogImage?: string;
+  ogType?: 'website' | 'article';
+  /** JSON-LD blocks. Kept light — she is a person, not an institution. */
+  jsonLd?: Record<string, unknown>[];
+  noindex?: boolean;
+}
+
+const {
+  title,
+  description = SITE.description,
+  ogImage = '/og-default.png',
+  ogType = 'website',
+  jsonLd = [],
+  noindex = false,
+} = Astro.props;
+
+const analyticsDomain = import.meta.env.PUBLIC_ANALYTICS_DOMAIN;
+const analyticsSrc =
+  import.meta.env.PUBLIC_ANALYTICS_SRC ?? 'https://plausible.io/js/script.js';
+
+const canonical = new URL(Astro.url.pathname.replace(/\/$/, '') || '/', SITE.origin);
+const ogImageUrl = new URL(ogImage, SITE.origin);
+const fullTitle = title === SITE.name ? title : `${title} — ${SITE.name}`;
+---
+
+<!doctype html>
+<html lang="uz" data-theme="light" data-textsize="md">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical.href} />
+    {noindex && <meta name="robots" content="noindex" />}
+
+    <meta property="og:type" content={ogType} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical.href} />
+    <meta property="og:image" content={ogImageUrl.href} />
+    <meta property="og:locale" content="uz_UZ" />
+    <meta property="og:site_name" content={SITE.name} />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link rel="alternate" type="application/rss+xml" title={SITE.name} href="/rss.xml" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+    {
+      /* Exactly the two faces that render above the fold: the body face and the
+         display face the LCP heading is set in. The other five arrive lazily with
+         font-display:swap. Driven by scripts/font-manifest.mjs so this list cannot
+         drift from what public/fonts actually contains. */
+      PRELOAD_FONTS.map((font) => (
+        <link rel="preload" as="font" type="font/woff2" href={`/fonts/${font.to}`} crossorigin />
+      ))
+    }
+
+    {
+      jsonLd.map((block) => (
+        <script type="application/ld+json" set:html={JSON.stringify(block)} is:inline />
+      ))
+    }
+
+    <!--
+      Restores theme and text size BEFORE first paint so there is no flash of the
+      wrong state. This snippet and the control wiring below are the only scripts
+      on the site (plus the analytics tag).
+    -->
+    <script is:inline>
+      (function () {
+        try {
+          var el = document.documentElement;
+          var theme = localStorage.getItem('theme');
+          if (theme !== 'light' && theme !== 'dark') {
+            theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          }
+          el.setAttribute('data-theme', theme);
+
+          var size = localStorage.getItem('textsize');
+          el.setAttribute('data-textsize', size === 'lg' || size === 'xl' ? size : 'md');
+        } catch (err) {
+          /* private mode / storage disabled — the server-rendered defaults stand */
+        }
+      })();
+    </script>
+
+    {
+      /* Cookieless, EU-hosted, no personal data. Loaded only in production and
+         only when a domain is configured, so dev and CI never phone home.
+         Point ANALYTICS_SRC at a self-hosted Umami to switch providers. */
+      analyticsDomain && import.meta.env.PROD && (
+        <script is:inline defer data-domain={analyticsDomain} src={analyticsSrc} />
+      )
+    }
+
+    <slot name="head" />
+  </head>
+
+  <body>
+    <a class="skip-link" href="#asosiy">Asosiy mazmunga oʻtish</a>
+
+    <Masthead />
+
+    <main id="asosiy">
+      <slot />
+    </main>
+
+    <Footer />
+
+    <script is:inline>
+      (function () {
+        var el = document.documentElement;
+
+        function save(key, value) {
+          try {
+            localStorage.setItem(key, value);
+          } catch (err) {
+            /* storage disabled; the choice still applies for this page view */
+          }
+        }
+
+        function syncPressed() {
+          var size = el.getAttribute('data-textsize') || 'md';
+          document.querySelectorAll('.prefs button[data-size]').forEach(function (btn) {
+            btn.setAttribute('aria-pressed', String(btn.dataset.size === size));
+          });
+          var dark = el.getAttribute('data-theme') === 'dark';
+          document.querySelectorAll('[data-theme-toggle]').forEach(function (btn) {
+            btn.setAttribute('aria-pressed', String(dark));
+          });
+        }
+
+        document.addEventListener('click', function (event) {
+          var sizeButton = event.target.closest('.prefs button[data-size]');
+          if (sizeButton) {
+            el.setAttribute('data-textsize', sizeButton.dataset.size);
+            save('textsize', sizeButton.dataset.size);
+            syncPressed();
+            return;
+          }
+
+          if (event.target.closest('[data-theme-toggle]')) {
+            var next = el.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            el.setAttribute('data-theme', next);
+            save('theme', next);
+            syncPressed();
+          }
+        });
+
+        syncPressed();
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,26 @@
+---
+import EntryRow from './EntryRow.astro';
+import type { Entry } from '../lib/entries';
+
+interface Props {
+  entries: Entry[];
+  evergreenLabel?: boolean;
+  emptyText?: string;
+}
+
+const { entries, evergreenLabel = false, emptyText = 'Hozircha bu yerda yozuv yoʻq.' } = Astro.props;
+---
+
+{
+  entries.length === 0 ? (
+    <p class="empty">{emptyText}</p>
+  ) : (
+    <ul class="entries">
+      {entries.map((entry) => (
+        <li>
+          <EntryRow entry={entry} evergreenLabel={evergreenLabel} />
+        </li>
+      ))}
+    </ul>
+  )
+}

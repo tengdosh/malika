@@ -1,0 +1,42 @@
+---
+import { SITE } from '../lib/site.js';
+
+const year = new Date().getFullYear();
+
+const LINKS = [
+  { href: '/yozuvlar', label: 'Yozuvlar' },
+  { href: '/qaydlar', label: 'Qaydlar' },
+  { href: '/koz-sogligi', label: 'Koʻz sogʻligʻi' },
+  { href: '/hozir', label: 'Hozir' },
+  { href: '/men-haqimda', label: 'Men haqimda' },
+  { href: '/maxfiylik', label: 'Maxfiylik' },
+  { href: '/rss.xml', label: 'RSS' },
+];
+---
+
+<footer class="footer">
+  <div class="shell footer__grid">
+    <div>
+      <p class="footer__name">{SITE.name}</p>
+      <p class="footer__credential">{SITE.credential}</p>
+
+      <!-- Standing medical disclaimer. The per-post version is in MedicalNotice.astro. -->
+      <p class="footer__notice">
+        Bu saytdagi sogʻliq haqidagi yozuvlar umumiy maʼrifiy maqsadda yozilgan. Ular tashxis
+        yoki davolash tavsiyasi emas. Sogʻligʻingiz boʻyicha qaror qabul qilishdan oldin
+        shifokorga murojaat qiling.
+      </p>
+    </div>
+
+    <nav aria-label="Saytning boshqa sahifalari">
+      <ul class="footer__links">
+        {LINKS.map((link) => <li><a href={link.href}>{link.label}</a></li>)}
+        <li><a href={SITE.telegram} rel="me noopener">Telegram</a></li>
+      </ul>
+    </nav>
+  </div>
+
+  <div class="shell">
+    <p class="footer__copy">© {year} {SITE.name}</p>
+  </div>
+</footer>

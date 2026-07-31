@@ -1,0 +1,15 @@
+---
+interface Props {
+  text: string;
+}
+
+const { text } = Astro.props;
+---
+
+<section class="shell section" aria-labelledby="hozir-strip">
+  <div class="now-strip">
+    <p class="now-strip__label" id="hozir-strip">Hozir</p>
+    <p>{text}</p>
+    <a class="now-strip__link" href="/hozir">Toʻliq oʻqish</a>
+  </div>
+</section>

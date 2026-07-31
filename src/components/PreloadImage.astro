@@ -1,0 +1,35 @@
+---
+import { getImage } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+/**
+ * Announces an above-the-fold image in <head> so the browser can start fetching
+ * it while it is still parsing the document, instead of discovering it in the
+ * body a full round trip later.
+ *
+ * Pass the SAME src/widths/sizes/format as the <Image>/<Picture> that renders it,
+ * or the preload will miss and the image will be fetched twice.
+ */
+interface Props {
+  src: ImageMetadata;
+  widths: number[];
+  sizes: string;
+  /** Set for <Picture>, whose first source is AVIF. Browsers skip preloads
+      whose type they cannot decode, so this never causes a double download. */
+  format?: 'avif' | 'webp';
+}
+
+const { src, widths, sizes, format } = Astro.props;
+
+const image = await getImage({ src, widths, sizes, ...(format && { format }) });
+---
+
+<link
+  rel="preload"
+  as="image"
+  href={image.src}
+  imagesrcset={image.srcSet.attribute}
+  imagesizes={sizes}
+  fetchpriority="high"
+  {...(format && { type: `image/${format}` })}
+/>

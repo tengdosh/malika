@@ -1,0 +1,51 @@
+---
+import { Picture } from 'astro:assets';
+import PillarChip from './PillarChip.astro';
+import { entryHref, type Entry } from '../lib/entries';
+import { formatDate, isoDate } from '../lib/format';
+
+interface Props {
+  entry: Entry;
+}
+
+const { entry } = Astro.props;
+const { title, description, pillar, date, cover, coverAlt, sources } = entry.data;
+const href = entryHref(entry);
+
+/**
+ * With no cover the featured slot does NOT render an empty box. It falls back to
+ * a text-only treatment that still reads as deliberate: a blush rule, a larger
+ * title and more air. If a missing photo made a post look broken, she would stop
+ * publishing rather than post without one.
+ */
+const hasCover = Boolean(cover);
+---
+
+<article class:list={['featured', hasCover ? 'featured--with-cover' : 'featured--text-only']}>
+  {
+    cover && (
+      <a class="featured__media" href={href} tabindex="-1" aria-hidden="true">
+        <Picture
+          src={cover}
+          formats={['avif', 'webp']}
+          widths={[560, 840, 1120]}
+          sizes="(min-width: 46rem) 46vw, 92vw"
+          alt={coverAlt ?? ''}
+          loading="lazy"
+          decoding="async"
+        />
+      </a>
+    )
+  }
+
+  <div>
+    <div class="featured__meta">
+      <PillarChip pillar={pillar} />
+      {sources.length > 0 && <span class="badge-sourced">manbalar bilan</span>}
+    </div>
+
+    <h3><a href={href}>{title}</a></h3>
+    <p class="featured__standfirst">{description}</p>
+    <time class="featured__date" datetime={isoDate(date)}>{formatDate(date)}</time>
+  </div>
+</article>
