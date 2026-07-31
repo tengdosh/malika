@@ -1,0 +1,27 @@
+name: check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # axe and Lighthouse need a real browser. scripts/lib/browser.mjs also
+      # picks up CHROME_PATH or a system Chrome if one is already present.
+      - name: Install Chrome
+        run: pnpm exec puppeteer browsers install chrome
+
+      - run: pnpm check
