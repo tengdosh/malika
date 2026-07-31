@@ -1,0 +1,25 @@
+/* Design tokens. Copied verbatim from the approved spec — do not adjust the hex values.
+   Three rules these encode, each from a measured failure:
+     1. --blush is never a text colour (2.18:1 on --paper). Backgrounds/borders/dividers only.
+     2. Never apply opacity to text. If text must recede, use --muted.
+     3. One accent only: --plum, with --blush as its soft tint. No third colour. */
+
+:root{
+  --paper:#FDFAFB; --surface:#F7EFF2; --ink:#2B2129; --muted:#665A68;
+  --plum:#7A3F63; --blush:#D99BB0; --blush-soft:#F6E4EA; --line:#EADFE4;
+  --base:100%;
+  --display:'Alegreya',Georgia,serif;
+  --body:'Alegreya Sans',system-ui,sans-serif;
+  --hand:'Caveat',cursive;
+  --measure:64ch;
+  --pad:clamp(1.25rem,5vw,2.75rem);
+  --arch:11rem 11rem 1.1rem 1.1rem;
+  /* type floor — no interface text below 13px, anywhere */
+  --t-meta:.8125rem;   /* 13px */
+  --t-small:.875rem;   /* 14px */
+  --t-body:1.0625rem;  /* 17px */
+}
+html[data-theme="dark"]{
+  --paper:#171319; --surface:#211B23; --ink:#F0E8EE; --muted:#ADA0AC;
+  --plum:#E4A9C4; --blush:#C98BA8; --blush-soft:#2A2130; --line:#332A36;
+}
