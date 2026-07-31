@@ -6,6 +6,8 @@
 
 :root{
   --paper:#FDFAFB; --surface:#F7EFF2; --ink:#2B2129; --muted:#665A68;
+  /* --blush: never a text colour (2.18:1 on paper),
+     and never a text background in dark mode (2.26:1 against --ink). */
   --plum:#7A3F63; --blush:#D99BB0; --blush-soft:#F6E4EA; --line:#EADFE4;
   --base:100%;
   --display:'Alegreya',Georgia,serif;
@@ -13,7 +15,23 @@
   --hand:'Caveat',cursive;
   --measure:64ch;
   --pad:clamp(1.25rem,5vw,2.75rem);
-  --arch:11rem 11rem 1.1rem 1.1rem;
+
+  /* Shape scale.
+     The motif is "rounded corners, one corner cut sharp", SCALED TO ELEMENT SIZE
+     — not one shared value. --arch-portrait is the only dome, and it is named
+     that way so it cannot be applied literally to anything else: at 11rem on a
+     wide, short block the browser scales the radii down and the result reads as
+     a dome, which is wrong everywhere except the portrait. */
+  --arch-portrait:11rem 11rem 1.1rem 1.1rem;   /* portrait only */
+  --arch-thumb:2.2rem 2.2rem .35rem 2.2rem;    /* entry thumbnail */
+  --arch-media:1.6rem 1.6rem .4rem 1.6rem;     /* featured, article hero, reading card, subscribe */
+  --arch-avatar:2rem 2rem .5rem .5rem;         /* byline avatar */
+  --arch-strip:1.1rem 1.1rem 1.1rem .3rem;     /* "Hozir" strip */
+  --arch-chip:.7rem .7rem .7rem .2rem;         /* pillar chip */
+  --arch-book:.35rem .9rem .9rem .35rem;       /* book cover — sharp on the spine side */
+  --arch-sources:1.2rem;                       /* sources block */
+  --arch-soft:1rem;                            /* notice, entry hover */
+
   /* type floor — no interface text below 13px, anywhere */
   --t-meta:.8125rem;   /* 13px */
   --t-small:.875rem;   /* 14px */

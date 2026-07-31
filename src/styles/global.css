@@ -98,10 +98,10 @@ a:hover { text-decoration-thickness: 2px; }
 }
 .skip-link:focus-visible { transform: translateY(0); }
 
-/* The arch: rounded top, tighter bottom corners. The one repeating shape.
-   Used on the portrait, entry thumbnails, chips, the Hozir block, the
-   reading card and the avatar — and nowhere else. */
-.arch { border-radius: var(--arch); }
+/* The arch motif — "rounded corners, one corner cut sharp" — is applied per
+   element from the shape scale in tokens.css, sized to the element. There is
+   deliberately NO shared .arch utility: one radius on every box is what turned
+   the "Hozir" strip into a dome. */
 
 /* Section rhythm */
 .section { margin-block: clamp(3.25rem, 8vw, 5.5rem); }
@@ -234,7 +234,7 @@ a:hover { text-decoration-thickness: 2px; }
   height: auto;
   aspect-ratio: 3 / 4;
   object-fit: cover;
-  border-radius: var(--arch);
+  border-radius: var(--arch-portrait);
   background: var(--surface);
 }
 /* A soft plate behind the portrait — background only, never text. */
@@ -246,7 +246,7 @@ a:hover { text-decoration-thickness: 2px; }
   inset: auto 1.5rem -0.75rem -0.75rem;
   height: 62%;
   background: var(--blush-soft);
-  border-radius: var(--arch);
+  border-radius: var(--arch-portrait);
   z-index: -1;
 }
 
@@ -278,7 +278,7 @@ a:hover { text-decoration-thickness: 2px; }
 
 .now-strip {
   background: var(--blush-soft);
-  border-radius: var(--arch);
+  border-radius: var(--arch-strip);
   padding: clamp(1.5rem, 4vw, 2.25rem) clamp(1.5rem, 4vw, 2.75rem);
   display: grid;
   gap: 0.6rem;
@@ -308,7 +308,7 @@ a:hover { text-decoration-thickness: 2px; }
   color: var(--plum);
   background: var(--blush-soft);
   padding: 0.28rem 0.7rem 0.3rem;
-  border-radius: 0.9rem 0.9rem 0.2rem 0.9rem;
+  border-radius: var(--arch-chip);
   text-decoration: none;
   white-space: nowrap;
 }
@@ -337,7 +337,7 @@ a.pillar-chip:hover { background: var(--plum); color: var(--paper); }
   height: auto;
   aspect-ratio: 4 / 3;
   object-fit: cover;
-  border-radius: 1.6rem 1.6rem 0.4rem 1.6rem;
+  border-radius: var(--arch-media);
   background: var(--surface);
 }
 .featured__meta { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.85rem; }
@@ -367,7 +367,19 @@ a.pillar-chip:hover { background: var(--plum); color: var(--paper); }
   grid-template-columns: minmax(0, 1fr);
   gap: 1rem;
   padding-block: clamp(1.25rem, 3vw, 1.75rem);
+  padding-inline: clamp(0.5rem, 2vw, 0.9rem);
+  margin-inline: calc(-1 * clamp(0.5rem, 2vw, 0.9rem));
   align-items: start;
+  border-radius: var(--arch-soft);
+}
+
+/* A quiet hover plate. --surface keeps every pairing in the row already-verified
+   (ink 13.74/14.03, muted 5.76/6.74) so it introduces no new colour maths. */
+@media (hover: hover) {
+  .entries > li:hover .row { background: var(--surface); }
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .row { transition: background-color 140ms ease; }
 }
 /* The thumbnail gutter is a share of the row, not a rem length: at 200% text a
    4.75rem gutter would eat two thirds of a phone screen and leave the title
@@ -381,7 +393,7 @@ a.pillar-chip:hover { background: var(--plum); color: var(--paper); }
   height: auto;
   aspect-ratio: 1 / 1;
   object-fit: cover;
-  border-radius: 2.2rem 2.2rem 0.35rem 2.2rem;
+  border-radius: var(--arch-thumb);
   background: var(--surface);
 }
 .row__meta { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
@@ -395,7 +407,7 @@ a.pillar-chip:hover { background: var(--plum); color: var(--paper); }
 
 .reading {
   background: var(--surface);
-  border-radius: var(--arch);
+  border-radius: var(--arch-media);
   padding: clamp(1.5rem, 4vw, 2.5rem);
   display: grid;
   gap: clamp(1.25rem, 3vw, 2rem);
@@ -410,7 +422,7 @@ a.pillar-chip:hover { background: var(--plum); color: var(--paper); }
   height: auto;
   aspect-ratio: 2 / 3;
   object-fit: cover;
-  border-radius: 0.5rem 0.5rem 0.15rem 0.5rem;
+  border-radius: var(--arch-book);
   background: var(--blush-soft);
 }
 .reading__label {
@@ -434,7 +446,7 @@ a.pillar-chip:hover { background: var(--plum); color: var(--paper); }
 
 .cta {
   border: 1px solid var(--line);
-  border-radius: 1.4rem;
+  border-radius: var(--arch-media);
   padding: clamp(1.75rem, 4vw, 2.75rem);
   text-align: center;
   display: grid;
@@ -506,7 +518,7 @@ a.pillar-chip:hover { background: var(--plum); color: var(--paper); }
   height: auto;
   aspect-ratio: 16 / 9;
   object-fit: cover;
-  border-radius: 1.6rem 1.6rem 0.4rem 1.6rem;
+  border-radius: var(--arch-media);
   background: var(--surface);
 }
 .article__cover figcaption { font-size: var(--t-meta); color: var(--muted); margin-top: 0.6rem; }
@@ -523,7 +535,7 @@ a.pillar-chip:hover { background: var(--plum); color: var(--paper); }
 }
 .byline__avatar {
   width: 2.9rem; height: 2.9rem; flex: none;
-  border-radius: 1.2rem 1.2rem 0.2rem 1.2rem;
+  border-radius: var(--arch-avatar);
   background: var(--blush-soft);
   object-fit: cover;
   display: grid; place-items: center;
@@ -549,7 +561,7 @@ a.pillar-chip:hover { background: var(--plum); color: var(--paper); }
 }
 .prose strong { font-weight: 700; }
 .prose hr { border: 0; border-top: 1px solid var(--line); margin-block: 2.25em; }
-.prose img { border-radius: 1.2rem 1.2rem 0.3rem 1.2rem; }
+.prose img { border-radius: var(--arch-media); }
 .prose code {
   background: var(--surface);
   padding: 0.1em 0.35em;
@@ -560,7 +572,7 @@ a.pillar-chip:hover { background: var(--plum); color: var(--paper); }
 /* Sources + medical notice */
 .sources {
   background: var(--surface);
-  border-radius: 1.1rem;
+  border-radius: var(--arch-sources);
   padding: clamp(1.25rem, 3vw, 1.75rem);
   margin-top: clamp(2rem, 5vw, 3rem);
   max-width: var(--measure);
@@ -574,7 +586,7 @@ a.pillar-chip:hover { background: var(--plum); color: var(--paper); }
 .notice {
   border: 1px solid var(--line);
   border-left: 3px solid var(--plum);
-  border-radius: 0.4rem 1.1rem 1.1rem 0.4rem;
+  border-radius: var(--arch-soft);
   padding: clamp(1.1rem, 3vw, 1.5rem);
   margin-top: clamp(1.5rem, 4vw, 2.25rem);
   max-width: var(--measure);
