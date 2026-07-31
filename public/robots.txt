@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://malika-bobonazarova.uz/sitemap-index.xml
