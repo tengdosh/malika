@@ -176,9 +176,33 @@ renders in a fallback face — visible in almost every sentence.
    display faces. This is the check that matters, because the faces are subset:
    a missing character would silently fall back mid-sentence.
 
-It has already caught one real bug: `→` (U+2192) in a study note. Alegreya's
-latin subset contains **no horizontal arrows at all**, so it would have fallen
-back no matter how the subsetting was configured.
+**The coverage pass never blocks a deploy on Malika's writing.** It splits by
+source:
+
+| Character comes from | Result |
+|---|---|
+| `src/content/**` (or a markdown transform of it) | **warning** — build continues, glyph falls back to a system font |
+| a `.astro` file or `src/lib` UI string | **fail** — a developer is watching CI and the fix is one line |
+
+This matters more than it looks. Malika writes on a phone: `…`, `—`, `«»`,
+arrows and pasted characters are inevitable. If an unexpected character failed
+CI she would save a post, never see the failure, and the site would silently
+stop updating — the exact failure mode the apostrophe rules exist to prevent.
+
+**General rule for this project: nothing Malika saves may block a deploy.** The
+only exceptions are the two schema rules (required `sources`, required
+`coverAlt`), which are deliberate and surface immediately on save rather than in
+CI.
+
+The analysis also runs as an Astro integration on `astro:build:done`, so the
+summary line and any warnings appear in the Vercel/Cloudflare build log, not
+only in `pnpm check`. A warning nobody sees in CI is a warning nobody sees.
+
+Some characters cannot be fixed by widening the charset: **Alegreya's latin
+subset contains no horizontal arrows at all** (`→ ← ↔`), nor `≈ ≤ ≥ ≠ ∞ √ №`,
+nor any emoji. Subsetting cannot add a glyph the source font lacks, so those
+warn and fall back by design. `UNAVAILABLE_IN_SOURCE` in the font manifest
+documents the list.
 
 ### Contrast
 
@@ -329,9 +353,26 @@ for swapping in an SVG scan of her real handwriting, after which Caveat and the
 Tokens live in `src/styles/tokens.css` and are copied verbatim from the approved
 spec. **Do not adjust the hex values.**
 
-One shape: **the arch** — rounded top, tighter bottom corners. It appears on the
-portrait, entry thumbnails, chips, the "Hozir" block, the reading card and the
-avatar, and nowhere else. Not on buttons, inputs or the footer.
+### The arch
+
+The motif is **"rounded corners, one corner cut sharp", scaled to element size**
+— not a single shared radius. There is deliberately no `.arch` utility class:
+applying one value to every box is what turned the "Hozir" strip into a dome.
+
+| Element | Token | Value |
+|---|---|---|
+| portrait | `--arch-portrait` | `11rem 11rem 1.1rem 1.1rem` — **the only dome** |
+| entry thumbnail | `--arch-thumb` | `2.2rem 2.2rem .35rem 2.2rem` |
+| featured image, article hero, reading card, subscribe block | `--arch-media` | `1.6rem 1.6rem .4rem 1.6rem` |
+| byline avatar | `--arch-avatar` | `2rem 2rem .5rem .5rem` |
+| "Hozir" strip | `--arch-strip` | `1.1rem 1.1rem 1.1rem .3rem` |
+| pillar chip | `--arch-chip` | `.7rem .7rem .7rem .2rem` |
+| book cover | `--arch-book` | `.35rem .9rem .9rem .35rem` (sharp on the spine side) |
+| sources block | `--arch-sources` | `1.2rem` |
+| notice, entry hover | `--arch-soft` | `1rem` |
+| Telegram button | — | `999px` |
+
+Not on inputs, the masthead or the footer.
 
 The homepage renders in exactly this order, and the rhythm is the design:
 masthead → hero → "Hozir" strip → Soʻnggi yozuvlar (one featured entry, then
@@ -411,6 +452,15 @@ environment to enable it in production builds only; dev and CI never load it. Se
 No visitor personal data is stored anywhere, which keeps the site clear of
 Uzbekistan's sensitive-data localisation rules and makes foreign hosting
 straightforward. `/maxfiylik` ships from day one and describes exactly this.
+
+### Social handles
+
+`SOCIAL.telegram` and `SOCIAL.instagram` in `src/lib/site.js` are **unset**. The
+site builds and deploys without them: the Telegram CTA, the footer social link
+and the `/maxfiylik` contact line each render nothing, and `sameAs` is omitted
+from `Person` JSON-LD rather than emitted empty — a guessed or empty `sameAs` is
+worse than none, because it can associate her with a stranger's account. Set the
+two constants when real handles exist; nothing else needs changing.
 
 ---
 
