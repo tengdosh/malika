@@ -15,6 +15,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdtempSync, rmSync, copyFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { analyseGlyphCoverage as analyse } from './lib/glyph-coverage.mjs';
 
 let failures = 0;
 const cleanups = [];
@@ -78,6 +79,79 @@ try {
       'glyph check accepts the shipped fonts (control: must NOT fail)',
       !fails('node', ['scripts/check-glyphs.mjs', 'public/fonts']),
     );
+  }
+
+  // 3 — Coverage split: content warns and ships, UI strings fail.
+  //     This is the rule that matters most operationally — Malika writes on a
+  //     phone, and a character she typed must never stop a deploy.
+  {
+    const post = 'src/content/posts/__fixture-glyphs.md';
+    writeFileSync(
+      post,
+      [
+        '---',
+        'title: Fixture — telefondan yozilgan',
+        'description: Ellipsis, tire, qoʻshtirnoq, strelka va emoji bilan.',
+        'pillar: kundalik',
+        'date: 2026-07-30',
+        '---',
+        '',
+        'Bugun charchadim… lekin yaxshi kun edi — rostdan ham.',
+        '',
+        'U menga «rahmat» dedi. Keyin qarasam: kitob → stol → oyna. 🙂',
+        '',
+      ].join('\n'),
+    );
+    cleanups.push(() => rmSync(post, { force: true }));
+
+    expectFailure(
+      'a post with …, —, «», → and an emoji still BUILDS',
+      !fails('pnpm', ['exec', 'astro', 'build']),
+    );
+    expectFailure(
+      'those characters warn but do NOT fail the glyph check',
+      !fails('node', ['scripts/check-glyphs.mjs']),
+    );
+
+    const report = analyse();
+    expectFailure(
+      'the uncovered content characters are reported as warnings',
+      report.warnings.length > 0 && report.failures.length === 0,
+      `${report.warnings.length} warning(s), ${report.failures.length} error(s)`,
+    );
+
+    rmSync(post, { force: true });
+
+    // Same characters, but authored in a .astro UI string — must fail.
+    // NOT underscore-prefixed: Astro excludes those from file-based routing, so
+    // an _-named fixture page would never be built and the assertion would pass
+    // vacuously.
+    const page = 'src/pages/zz-fixture-glyphs.astro';
+    writeFileSync(
+      page,
+      [
+        '---',
+        "import Base from '../layouts/Base.astro';",
+        '---',
+        '',
+        '<Base title="Fixture" noindex>',
+        '  <div class="shell page-head">',
+        '    <h1>Fixture</h1>',
+        '    <p>kitob \u2192 stol</p>',
+        '  </div>',
+        '</Base>',
+        '',
+      ].join('\n'),
+    );
+    cleanups.push(() => rmSync(page, { force: true }));
+
+    execFileSync('pnpm', ['exec', 'astro', 'build'], { stdio: 'pipe' });
+    expectFailure(
+      'the same character in a .astro UI string FAILS the glyph check',
+      fails('node', ['scripts/check-glyphs.mjs']),
+    );
+
+    rmSync(page, { force: true });
   }
 
   // 3 & 4 — Schema refinements, exercised end to end through a real build.

@@ -29,25 +29,37 @@ export const SIGNATURE_TEXT = 'Malika';
  * check-glyphs.mjs re-reads every character of the built HTML and fails if any
  * of it is not covered here.
  */
+const range = (from, to) =>
+  Array.from({ length: to - from + 1 }, (_, i) => String.fromCodePoint(from + i)).join('');
+
 export const TEXT_CHARSET = [
-  // printable ASCII
-  Array.from({ length: 0x7e - 0x20 + 1 }, (_, i) => String.fromCodePoint(0x20 + i)).join(''),
-  // Uzbek: Oʻ Gʻ (U+02BB) and tutuq belgisi (U+02BC)
-  'ʻʼ',
-  // No arrows: Alegreya's latin subset contains none, so asking for one yields a
-  // fallback glyph. check-glyphs' coverage pass catches that in the built HTML.
-  // typographic punctuation, incl. the · used in bylines and the — used in prose
-  ' ©«»°·–—‘’“”•…‹›×',
-  // accented Latin-1 for foreign names and book titles
-  'ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÑÒÓÔÕÖØÙÚÛÜÝß',
-  'àáâãäåæçèéêëìíîïñòóôõöøùúûüýÿ',
+  // printable ASCII — includes both straight quote forms
+  range(0x20, 0x7e),
+  // Latin-1 Supplement in full: accented letters for foreign names, plus « » ° ·
+  // © ® ± ÷ § ¶ ½ ¼ ¾ — all of it is in the source face, and guessing which
+  // subset of "ordinary writing" to allow is how characters go missing.
+  range(0xa0, 0xff),
+  // Uzbek: Oʻ Gʻ (U+02BB) and tutuq belgisi (U+02BC), plus common modifiers
+  'ʻʼˆ˚˜',
   // Turkish / Azerbaijani letters that appear in regional names
-  'ıİşŞğĞ',
+  'ıİşŞğĞŒœ',
+  // General punctuation: every dash form, every quote form, ellipsis, bullets,
+  // daggers, primes, per-mille, fraction slash.
+  range(0x2010, 0x201f),
+  range(0x2020, 0x2022),
+  '‥…‰′″‹›⁄',
+  // Symbols the source face actually carries.
+  '€™↑↓−∕',
 ].join('');
 
-/** Uzbek alphabet, digits and basic punctuation — enough for any heading emphasis. */
-export const DISPLAY_ITALIC_CHARSET =
-  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 .,:;!?()[]«»“”‘’"\'-–—…ʻʼ';
+/**
+ * Characters that are wanted but simply do not exist in Alegreya's latin subset:
+ * → ← ↔ ≈ ≤ ≥ ≠ ∞ √ № ₽ ₸, and every emoji. Subsetting cannot add a glyph the
+ * source font does not have, so these are listed here as documentation rather
+ * than in the charset. They fall back to a system font, and the coverage pass
+ * reports them as warnings when they come from content.
+ */
+export const UNAVAILABLE_IN_SOURCE = '→←↔≈≤≥≠∞√№₽₸';
 
 export const FONT_FILES = [
   // Display — Alegreya, variable weight axis.
@@ -69,12 +81,10 @@ export const FONT_FILES = [
     family: 'Alegreya',
     style: 'italic',
     weight: '400 900',
-    // Display italic renders <em> inside headings only — today that is the single
-    // word "Malika" in the hero. Prose <em> and blockquotes use the *body* italic,
-    // a different file. So this face gets the Uzbek alphabet and basic punctuation
-    // rather than the full text charset: it is on the LCP critical path and every
-    // kilobyte here is measured in milliseconds.
-    subsetText: DISPLAY_ITALIC_CHARSET,
+    // Same charset as the rest: markdown can put <em> inside a heading, which
+    // lands in this face, and a narrower charset here would be a second and much
+    // subtler coverage gap.
+    subsetText: TEXT_CHARSET,
     // The hero h1 — the LCP element on the homepage — contains <em>Malika</em>.
     // Without this preload the heading re-renders when the italic face lands and
     // LCP is pinned to that moment (measured: 2183ms -> 1961ms).
