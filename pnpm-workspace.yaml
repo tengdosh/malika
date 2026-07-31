@@ -1,0 +1,5 @@
+# pnpm 11 reads build-script approval from here, not from package.json.
+# Both packages ship platform binaries and need their install scripts to run.
+allowBuilds:
+  esbuild: true
+  sharp: true
