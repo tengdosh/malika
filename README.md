@@ -164,9 +164,9 @@ book:
 ---
 ```
 
-`src/content/site/men-haqimda.md` is the `/men-haqimda` body and holds the hero
-portrait. It currently has two `TODO(bio)` markers — institution and graduation
-year — which are deliberately unfilled.
+`src/content/site/men_haqimda/index.md` is the `/men-haqimda` body and holds the
+hero portrait. Institution and graduation year are editable fields (`muassasa`,
+`bitirganYil`), both currently blank — they render only when filled in.
 
 ---
 
@@ -626,6 +626,25 @@ These used to come from platform config. They are now the server's job:
 
 The admin's own `Cache-Control: no-store` and `X-Robots-Tag: noindex, nofollow`
 are set by the middleware, so they survive any host.
+
+### Do not run the checks on the machine that serves the site
+
+`pnpm check` rebuilds `dist/` several times, with the *default* configuration —
+no `SITE_BASE`, no `PUBLIC_NOINDEX`. If the running server reads that same
+`dist/`, the next restart will serve a differently-configured site: with a base
+path configured, every URL 404s.
+
+Two ways out, in order of preference:
+
+1. **Serve from a directory the checks do not touch.** Build in a checkout, copy
+   `dist/` to the serve location, point the process there. `scripts/rebuild.sh`
+   is the natural place to add the copy.
+2. **Never run `pnpm check` on the serving machine.** Workable, but it relies on
+   nobody forgetting.
+
+The same applies to anything else that builds concurrently — two builds sharing
+one working tree tear `dist/` apart and produce
+`Cannot find module .../chunks/...` from a half-written build.
 
 ### Rebuild
 

@@ -7,6 +7,49 @@
  * one per run is four.
  */
 import { spawnSync } from 'node:child_process';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+
+/*
+ * Advisory lock.
+ *
+ * Several checks write into src/content/ and dist/ — check-fixtures plants
+ * deliberately broken posts, check-analytics rewrites the settings singleton and
+ * rebuilds four times. Two concurrent runs corrupt each other's fixtures and
+ * produce failures that look like real defects but are not; Lighthouse's applied
+ * throttling also measures whatever else the machine is doing.
+ *
+ * This turns that into one clear message instead of a confusing red run.
+ */
+const LOCK = '.tmp/check.lock';
+const stale = (pid) => {
+  try {
+    process.kill(pid, 0);
+    return false;
+  } catch {
+    return true;
+  }
+};
+
+if (existsSync(LOCK)) {
+  const holder = Number(readFileSync(LOCK, 'utf8').trim());
+  if (Number.isInteger(holder) && !stale(holder)) {
+    console.error(
+      `Another \`pnpm check\` is running (pid ${holder}).\n` +
+        '  These checks mutate src/content/ and dist/, so two runs corrupt each\n' +
+        "  other. Wait for it to finish, or remove .tmp/check.lock if it's dead.",
+    );
+    process.exit(1);
+  }
+  rmSync(LOCK, { force: true });
+}
+mkdirSync('.tmp', { recursive: true });
+writeFileSync(LOCK, String(process.pid));
+const releaseLock = () => rmSync(LOCK, { force: true });
+process.on('exit', releaseLock);
+process.on('SIGINT', () => {
+  releaseLock();
+  process.exit(130);
+});
 
 const STEPS = [
   { name: 'uzbek', label: 'Uzbek apostrophes (U+02BB / U+02BC)', cmd: ['node', ['scripts/check-uzbek.mjs']] },

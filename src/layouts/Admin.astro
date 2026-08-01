@@ -42,8 +42,8 @@ const path = stripBase(Astro.url.pathname).replace(/\/$/, '');
         <span class="adminbar__mark">Boshqaruv</span>
         <nav class="adminbar__nav" aria-label="Boshqaruv menyusi">
           {
-            /* TODO(cms): set ADMIN.cmsPath once the CMS is installed. Rendering a
-               link to a route that does not exist would be worse than omitting it. */
+            /* Still conditional: if ADMIN.cmsPath is ever unset, omitting the
+               link beats rendering one to a route that does not exist. */
             ADMIN.cmsPath && (
               <a href={withBase(ADMIN.cmsPath)} aria-current={path === ADMIN.cmsPath ? 'page' : undefined}>
                 Yozuvlarni tahrirlash

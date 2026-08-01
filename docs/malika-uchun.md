@@ -6,6 +6,21 @@ Bu qoʻllanma faqat siz uchun. Texnik bilim kerak emas — hammasi oddiy tilda.
 
 ---
 
+## Manzillar
+
+Hozircha sayt sinov manzilida turibdi. Oʻz domeniga koʻchgach, men sizga aytaman
+va bu jadvalni yangilayman — qolgan hamma narsa oʻzgarmaydi.
+
+| Nima | Hozirgi manzil |
+|---|---|
+| Sayt | `https://tengdosh.uzjoku.uz/malika` |
+| Yozuvlarni tahrirlash | `https://tengdosh.uzjoku.uz/keystatic` |
+| Statistika | `https://tengdosh.uzjoku.uz/malika/admin/statistika` |
+
+Ikkalasini ham telefoningiz brauzerida xatchoʻpga qoʻshib qoʻying.
+
+---
+
 ## Inglizcha soʻzlar — lugʻat
 
 Admin dasturining oʻz tugmalari inglizcha (buni oʻzgartirib boʻlmaydi). Siz
@@ -38,13 +53,7 @@ Qolgan hamma yozuv — maydon nomlari va izohlar — oʻzbekcha.
 
 ## 1. Admin sahifasini ochish
 
-Manzil:
-
-```
-https://malika-bobonazarova.uz/keystatic
-```
-
-Bu havolani telefoningiz brauzerida xatcho'pga qoʻshib qoʻying.
+Manzil yuqoridagi **Manzillar** jadvalida — "Yozuvlarni tahrirlash" qatori.
 
 Birinchi marta ochganingizda GitHub orqali kirish soʻraladi — bir marta bosasiz,
 keyin brauzer eslab qoladi. Kirish maʼlumotlarini sizga alohida yuboraman.
@@ -195,11 +204,7 @@ alohida maydonlar: yozsangiz sahifada koʻrinadi, boʻsh qoldirsangiz koʻrinmay
 
 ## 8. Tashriflarni koʻrish
 
-Manzil:
-
-```
-https://malika-bobonazarova.uz/admin/statistika
-```
+Manzil yuqoridagi **Manzillar** jadvalida — "Statistika" qatori.
 
 Bu alohida sahifa — login va parol soʻraydi (ularni sizga alohida yuboraman).
 

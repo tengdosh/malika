@@ -15,6 +15,8 @@ set, because it has been serving under a non-canonical hostname.
 - [ ] Rebuild
 - [ ] Confirm on a real page: `curl -s https://<origin>/ | grep -i 'name="robots"'` returns **nothing**
 - [ ] Confirm `sitemap-index.xml` and `robots.txt` are reachable
+- [ ] Update the address table at the top of `docs/malika-uchun.md` — it lists
+      the pre-launch addresses, and they are the only ones Malika has
 
 Leaving this on is the classic launch failure: everything looks finished, and
 the site is invisible for months with no error anywhere to explain it.

@@ -15,3 +15,9 @@ dist/
 # Stale output from the Vercel adapter (superseded by @astrojs/node)
 .vercel/
 .og-fonts/
+
+# Scratch output from check scripts
+.tmp/
+
+# Scratch output from check scripts
+.tmp/
