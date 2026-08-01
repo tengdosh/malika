@@ -49,14 +49,34 @@ Matn shu yerdan boshlanadi.
 | `sources` | **if `koz-sogligi`** | list of `{title, publisher, year?, url?}` |
 | `reviewedBy` | no | renders "[Ism] tomonidan koʻrib chiqilgan" near the byline |
 
-Two rules are enforced by the build, not by review. **Do not weaken either.**
+### The two editorial rules
 
-- A `koz-sogligi` post with no `sources` **fails the build.** No unsourced health
-  claim can ship, even by accident.
-- A `cover` with no `coverAlt` **fails the build.**
+They are enforced differently, because they are different problems.
 
-`scripts/check-fixtures.mjs` re-proves both on every CI run, by writing a
-deliberately broken post and asserting the build rejects it.
+**Sources on health posts — solved by information architecture.** Health posts
+live in their own collection, `sogliq`, whose Keystatic counterpart marks
+`sources` as `length: { min: 1 }`. The admin will not let one be saved without a
+source, so the rule is met *before* anything reaches the build. `koz-sogligi` is
+not offered as a pillar anywhere else, which makes the Zod `.refine` a backstop
+for hand-edited files and **unreachable through the CMS**. `check-schema-sync`
+asserts both of those structural facts, not just the field names.
+
+The alternative — withhold the post and warn — was rejected for this rule: the
+post silently wouldn't appear and Malika would have no way to find out why. Build
+logs are not a channel to her.
+
+**Cover alt text — solved by withholding the image.** A `cover` with no
+`coverAlt` does **not** fail the build. The post renders without the image and
+`src/lib/cover.ts` logs a warning naming the entry. That failure *is* visible to
+her: she opens the post, the photo is missing, and she fixes it. Self-correcting
+feedback beats a build failure she never sees. An image with no alt text is
+invisible to screen readers, so shipping it silently was never an option either —
+withholding is the only outcome that is both accessible and non-blocking.
+
+The same rule applies to the book cover on the reading card.
+
+`scripts/check-fixtures.mjs` re-proves all of this on every CI run, including
+that a missing `coverAlt` **succeeds** and produces a warning.
 
 ### Pillars
 
@@ -72,6 +92,22 @@ deliberately broken post and asserting the build rejects it.
 Slugs stay ASCII so they are safe in URLs and filenames; the Uzbek labels live in
 `src/lib/pillars.ts`. To add a pillar, edit the enum in `src/content.config.ts`
 **and** the maps in `src/lib/pillars.ts`.
+
+### Health posts are a separate collection
+
+`src/content/posts/sogliq/*` — same schema as `posts`, minus `pillar` (implied by
+the collection, never written to the file) and with `sources` genuinely required.
+
+**Public URLs stay flat.** Both collections merge in `getPosts()` and render at
+`/yozuvlar/<slug>`; the split is an authoring concern, not a URL one. That means
+the two collections share a URL namespace, so
+`scripts/check-slug-collisions.mjs` fails the build if both claim the same slug —
+Astro's own duplicate-route error names neither file.
+
+This is honest rather than awkward: a health post genuinely is a different kind
+of thing. It requires sources, carries a disclaimer, emits `MedicalWebPage`
+schema and appears on `/koz-sogligi`. Presenting it as its own type in the admin
+reflects what was already true.
 
 ### Notes (`/qaydlar`)
 
@@ -670,18 +706,16 @@ deploy** — `scripts/deploy.sh` fails the smoke test if it returns anything but
 
 Reported rather than worked around:
 
-- **No cross-field validation in Keystatic.** `fields.array` supports only
-  `length.min`, and `fields.conditional` reshapes the stored data into a
-  discriminated union. So "sources are required when pillar is Koʻz sogʻligʻi"
-  and "coverAlt is required when a cover is set" **cannot** surface in the admin
-  before saving — they fail the build instead. Both are called out in
-  docs/malika-uchun.md so Malika knows what to check. Options if this bites:
-  split health posts into their own Keystatic collection (costs a nested URL and
-  a second sidebar entry), or downgrade the rules to "withhold the post and warn"
-  so a save can never block a deploy. Say which you'd prefer.
+- **Keystatic still has no cross-field validation** — `fields.array` supports only
+  `length.min` and `fields.conditional` reshapes stored data. Both rules that
+  needed it have been solved another way (see "The two editorial rules"), so this
+  is no longer a live problem, but it constrains any future rule of the form
+  "field X is required when field Y is Z". The way out is usually a separate
+  collection, not a validator.
 - **Keystatic's own UI chrome is English** ("Add", "Create", "Dashboard"). Every
   label, description and navigation group we control is Uzbek; the surrounding
-  chrome is not localisable.
+  chrome is not localisable. `docs/malika-uchun.md` opens with a glossary of every
+  English term she will actually meet.
 
 ## Upgrade risks
 

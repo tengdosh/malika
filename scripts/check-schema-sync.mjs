@@ -16,12 +16,30 @@
  */
 import { readFileSync } from 'node:fs';
 
-/** Canonical frontmatter field names. `content` (the body) is not frontmatter. */
+/**
+ * Canonical frontmatter field names. `content` (the body) is not frontmatter.
+ *
+ * `health` is the sogliq collection: same shape minus `pillar`, which is implied
+ * by the collection rather than written to the file.
+ */
 const EXPECTED = {
   entry: [
     'title',
     'description',
     'pillar',
+    'date',
+    'updated',
+    'draft',
+    'featured',
+    'evergreen',
+    'cover',
+    'coverAlt',
+    'sources',
+    'reviewedBy',
+  ],
+  health: [
+    'title',
+    'description',
     'date',
     'updated',
     'draft',
@@ -113,6 +131,24 @@ function keysOf(blockSource) {
     /^\s*([A-Za-z_$][\w$]*)\s*:/.exec(line) ?? /^\s*([A-Za-z_$][\w$]*)\s*,?\s*$/.exec(line);
   if (depth === 0 && tail) keys.push(tail[1]);
 
+  /*
+   * Conditional spreads contribute their keys too. The health collection drops
+   * `pillar` with `...(health ? {} : { pillar: ... })`, which the walker above
+   * skips because the key sits inside the ternary's object literal — and a field
+   * this check cannot see is a field it cannot keep in sync.
+   *
+   * If the shape of a spread ever changes, this stops matching and the check
+   * reports a MISSING field rather than silently passing. That is the safe
+   * direction to fail in.
+   */
+  for (const spread of stripped.matchAll(/\.\.\.\([\s\S]*?\)\s*,/g)) {
+    // Only real field definitions. A spread also carries option objects
+    // (`validation: { length: { min: 1 } }`), whose keys are not fields.
+    for (const field of spread[0].matchAll(/^\s*([A-Za-z_$][\w$]*)\s*:\s*(?:fields|z)\./gm)) {
+      keys.push(field[1]);
+    }
+  }
+
   return [...new Set(keys)];
 }
 
@@ -121,7 +157,12 @@ const zod = readFileSync('src/content.config.ts', 'utf8');
 
 const parsed = {
   keystatic: {
+    // entryFields() is shared; `health: true` only drops `pillar`, so the parsed
+    // key list is the same and the health expectation is checked against it minus
+    // that one field. The spread is what makes pillar conditional, so assert it.
     entry: keysOf(block(keystatic, keystatic.indexOf('const entryFields ='))),
+    health: keysOf(block(keystatic, keystatic.indexOf('const entryFields =')))
+      .filter((field) => field !== 'pillar'),
     source: keysOf(block(keystatic, keystatic.indexOf('const sourceFields = fields.object('))),
     singletons: [
       ...new Set(
@@ -139,6 +180,11 @@ const parsed = {
       // evergreen is added per-collection, outside the shared field set
       ...(zod.includes('evergreen: z.boolean()') ? ['evergreen'] : []),
     ],
+    // The sogliq collection spreads entryFields and overrides pillar/sources.
+    health: [
+      ...keysOf(block(zod, zod.indexOf('const entryFields ='))),
+      ...(zod.includes('evergreen: z.boolean()') ? ['evergreen'] : []),
+    ].filter((field) => field !== 'pillar'),
     source: keysOf(block(zod, zod.indexOf('const source = z.object('))),
     singletons: keysOf(block(zod, zod.indexOf('z.object({', zod.indexOf('const site =')))),
     book: keysOf(block(zod, zod.indexOf('book: blankToUndefined('))),
@@ -162,11 +208,32 @@ const compare = (label, expected, actual, { ignore = new Set() } = {}) => {
   if (extra.length) console.error(`       unexpected: ${extra.join(', ')}`);
 };
 
-for (const group of ['entry', 'source', 'singletons', 'book']) {
+for (const group of ['entry', 'health', 'source', 'singletons', 'book']) {
   compare(`keystatic.config.ts  ${group}`, EXPECTED[group], parsed.keystatic[group], {
     ignore: BODY_FIELDS,
   });
   compare(`content.config.ts    ${group}`, EXPECTED[group], parsed.zod[group]);
+}
+
+/*
+ * Structural guarantees, not field lists:
+ *   - the admin must never offer koz-sogligi as a pillar, or an unsourced health
+ *     post becomes savable and the Zod backstop becomes reachable again
+ *   - the health collection must actually require a source
+ */
+if (/value:\s*'koz-sogligi'/.test(keystatic)) {
+  console.error("  FAIL keystatic.config.ts still offers 'koz-sogligi' as a pillar option");
+  console.error('       Health posts belong to the sogliq collection, where sources are required.');
+  failures += 1;
+} else {
+  console.log("  ok   keystatic.config.ts  no selectable 'koz-sogligi' pillar");
+}
+
+if (/validation:\s*\{\s*length:\s*\{\s*min:\s*1/.test(keystatic)) {
+  console.log('  ok   keystatic.config.ts  health sources require at least one entry');
+} else {
+  console.error('  FAIL keystatic.config.ts  health sources are no longer required (length.min 1)');
+  failures += 1;
 }
 
 if (failures > 0) {

@@ -6,6 +6,35 @@ Bu qoʻllanma faqat siz uchun. Texnik bilim kerak emas — hammasi oddiy tilda.
 
 ---
 
+## Inglizcha soʻzlar — lugʻat
+
+Admin dasturining oʻz tugmalari inglizcha (buni oʻzgartirib boʻlmaydi). Siz
+uchraydigan hammasi shu yerda:
+
+| Inglizcha | Nima qiladi |
+|---|---|
+| **Add** | Yangi yozuv qoʻshish |
+| **Create** | Yangi yozuvni birinchi marta saqlash |
+| **Save** | Mavjud yozuvdagi oʻzgarishni saqlash |
+| **Delete** | Yozuvni oʻchirish (qaytarib boʻlmaydi) |
+| **Discard** / **Reset** | Saqlanmagan oʻzgarishlarni bekor qilish |
+| **Dashboard** | Bosh sahifa — hamma boʻlimlar roʻyxati |
+| **Entries** | Yozuvlar soni |
+| **Draft** | Qoralama (bizda "Qoralama" belgisi) |
+| **Published** | Saytda koʻrinadigan yozuv |
+| **Editing** | Hozir tahrir qilyapsiz |
+| **Unsaved changes** | Saqlanmagan oʻzgarishlar bor |
+| **Log in with GitHub** | Kirish tugmasi |
+| **Sign out** | Chiqish |
+| **Upload** / **Choose file** | Rasm tanlash |
+| **Remove** | Rasmni olib tashlash |
+| **Add item** | Roʻyxatga yana bitta qoʻshish (masalan, yana bir manba) |
+| **Required** yoki qizil yulduzcha `*` | Bu maydonni toʻldirmasdan saqlab boʻlmaydi |
+
+Qolgan hamma yozuv — maydon nomlari va izohlar — oʻzbekcha.
+
+---
+
 ## 1. Admin sahifasini ochish
 
 Manzil:
@@ -27,7 +56,16 @@ keyin brauzer eslab qoladi. Kirish maʼlumotlarini sizga alohida yuboraman.
 
 ## 2. Yangi yozuv yozish
 
-Chapdagi roʻyxatdan **Yozuvlar** ni tanlang va yuqoridagi **Add** tugmasini bosing.
+Chapda **Yozuvlar** guruhida uchta boʻlim bor. Avval qaysi biriga yozayotganingizni
+tanlaysiz:
+
+| Boʻlim | Qachon |
+|---|---|
+| **Yozuvlar** | Odatdagi yozuvlar: kundalik, kitoblar, oʻqish, yoʻl, esse |
+| **Koʻz sogʻligʻi yozuvi** | Sogʻliq haqidagi yozuvlar — manba talab qilinadi |
+| **Qaydlar** | Oʻsib boradigan qaydlar |
+
+Keyin yuqoridagi **Add** tugmasini bosing.
 
 Maydonlar tartibi:
 
@@ -75,25 +113,31 @@ Nega muhim: koʻzi ojiz odamlar saytni ovozli dastur bilan oʻqiydi. U rasmni
 koʻrsata olmaydi, lekin sizning tavsifingizni oʻqib beradi. Tavsif boʻlmasa, ular
 uchun oʻsha joyda hech narsa yoʻq.
 
-Shuning uchun rasm qoʻshib, tavsifni yozmasangiz — sayt yangilanmaydi va menga
-xabar keladi.
+Tavsifni yozmasangiz nima boʻladi: **yozuv chiqadi, lekin rasmsiz.** Sayt
+buzilmaydi, hech narsa toʻxtamaydi — shunchaki rasm koʻrinmaydi. Yozuvingizni
+ochib koʻrsangiz darrov sezasiz. Tavsifni yozib saqlasangiz, rasm qaytadi.
 
 ---
 
-## 5. Koʻz sogʻligʻi yozuvlari — bitta qoʻshimcha shart
+## 5. Koʻz sogʻligʻi yozuvlari
 
-Mavzu sifatida **Koʻz sogʻligʻi** ni tanlasangiz, **Manbalar** boʻlimini
-toʻldirish **shart**.
+Sogʻliq haqida yozmoqchi boʻlsangiz, chapdagi **Koʻz sogʻligʻi yozuvi** boʻlimini
+tanlang — odatdagi "Yozuvlar" emas.
 
-Kamida bitta manba: nomi va kim chiqargani. Havola boʻlmasa — boʻsh qoldiring,
+Nima farqi bor:
+
+- **Manbalar toʻldirilishi shart.** Kamida bitta manba yozmasangiz, admin sizga
+  saqlashga ruxsat bermaydi. Xato qilib qoʻyish imkoni yoʻq.
+- **Mavzu tanlanmaydi** — u oʻzi "Koʻz sogʻligʻi" boʻladi.
+- Yozuv ostida avtomatik ravishda **eslatma** chiqadi: bu tashxis emas, umumiy
+  maʼlumot.
+- Yozuv `/koz-sogligi` boʻlimida ham koʻrinadi.
+
+Manba uchun: nomi va kim chiqargani yetarli. Havola boʻlmasa — boʻsh qoldiring,
 oʻzingizdan yozmang.
 
-Bu qoida ataylab qattiq qilingan. Sogʻliq haqidagi yozuv manbasiz chiqib ketmasligi
-kerak — bu sizning ishonchingiz masalasi.
-
-**Diqqat:** manbasiz saqlab qoʻysangiz, sayt yangilanmay qoladi va siz buni darrov
-sezmasligingiz mumkin. Shuning uchun Koʻz sogʻligʻi yozuvini saqlashdan oldin
-manbalarni tekshiring.
+Manzil boʻyicha farq yoʻq: sogʻliq yozuvi ham oddiy yozuv kabi
+`/yozuvlar/...` da turadi.
 
 ---
 
@@ -202,11 +246,13 @@ Qolgan hamma narsa — tire, uch nuqta, qoʻshtirnoq — normal koʻrinadi.
 Avval bilib qoʻying: **sizning yozganingiz saytni buzmaydi.** Statistika ishlamay
 qolsa, yozuvlar baribir koʻrinadi, faqat hisoblagichlar yoʻqoladi.
 
-Sayt yangilanmay qolsa, koʻpincha sabab ikkitadan biri:
+Eng koʻp uchraydigan ikkita savol:
 
-1. Koʻz sogʻligʻi yozuvida manba yoʻq;
-2. rasm qoʻshilgan, lekin rasm tavsifi yozilmagan.
+1. **Rasm koʻrinmayapti** — rasm tavsifi ("Rasm tavsifi" maydoni) yozilmagan.
+   Yozib saqlang, rasm qaytadi.
+2. **Yozuv umuman chiqmadi** — "Qoralama" belgisi hali turibdi. Uni olib
+   tashlab, qayta saqlang.
 
-Ikkalasini tekshirib koʻring. Boʻlmasa — menga yozing, tuzatib beraman.
+Boshqa narsa boʻlsa — menga yozing, tuzatib beraman.
 
 **Bogʻlanish:** *[bu yerga aloqa maʼlumoti qoʻshiladi]*

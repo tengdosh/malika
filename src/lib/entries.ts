@@ -1,11 +1,29 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
 import { withBase } from './site.js';
 
-/** posts and notes share a schema; most components accept either. */
-export type Entry = CollectionEntry<'posts'> | CollectionEntry<'notes'>;
+/** posts, sogliq and notes share a schema; most components accept any of them. */
+export type Entry =
+  | CollectionEntry<'posts'>
+  | CollectionEntry<'sogliq'>
+  | CollectionEntry<'notes'>;
+
+/** Anything that renders under /yozuvlar — ordinary posts and health posts alike. */
+export type PostEntry = CollectionEntry<'posts'> | CollectionEntry<'sogliq'>;
+
+/**
+ * The URL slug. `sogliq` is an authoring split, not a URL split: a health post
+ * lives at /yozuvlar/<slug> exactly like any other, so its collection never
+ * appears in the path. scripts/check-slug-collisions.mjs guarantees the two
+ * collections cannot claim the same slug.
+ */
+export const entrySlug = (entry: Entry): string => entry.id;
 
 export const entryHref = (entry: Entry): string =>
-  withBase(entry.collection === 'notes' ? `/qaydlar/${entry.id}` : `/yozuvlar/${entry.id}`);
+  withBase(
+    entry.collection === 'notes'
+      ? `/qaydlar/${entrySlug(entry)}`
+      : `/yozuvlar/${entrySlug(entry)}`,
+  );
 
 /** Drafts render in dev so she can preview them, and never ship. */
 const isPublished = (entry: { data: { draft: boolean } }) =>
@@ -16,9 +34,16 @@ const newestFirst = (a: Entry, b: Entry) => b.data.date.getTime() - a.data.date.
 /** Notes are sorted by last touched, not first published — they keep changing. */
 const lastTouched = (entry: Entry) => (entry.data.updated ?? entry.data.date).getTime();
 
-export async function getPosts(): Promise<CollectionEntry<'posts'>[]> {
-  const posts = await getCollection('posts', isPublished);
-  return posts.sort(newestFirst);
+/**
+ * Every entry that renders under /yozuvlar, both collections merged and sorted
+ * as one list. Callers do not need to know about the split — which is the point.
+ */
+export async function getPosts(): Promise<PostEntry[]> {
+  const [posts, health] = await Promise.all([
+    getCollection('posts', isPublished),
+    getCollection('sogliq', isPublished),
+  ]);
+  return [...posts, ...health].sort(newestFirst);
 }
 
 export async function getNotes(): Promise<CollectionEntry<'notes'>[]> {

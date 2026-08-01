@@ -16,19 +16,25 @@ interface Props {
 
 const { book } = Astro.props;
 const progress = Math.round(Math.max(0, Math.min(100, book.progress)));
+
+// Same rule as post covers: an image with no alt text is withheld rather than
+// shipped with alt="", which would be a meaningful image invisible to screen
+// readers. The card reads fine without it.
+const coverAlt = book.coverAlt?.trim();
+const showCover = Boolean(book.cover && coverAlt);
 ---
 
 <section class="shell section" aria-labelledby="oqiyapman">
   <div class="reading">
     {
-      book.cover && (
+      showCover && book.cover && coverAlt && (
         <div class="reading__cover">
           <Picture
             src={book.cover}
             formats={['avif', 'webp']}
             widths={[128, 256]}
             sizes="8rem"
-            alt={book.coverAlt ?? ''}
+            alt={coverAlt}
             loading="lazy"
             decoding="async"
           />

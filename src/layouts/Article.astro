@@ -11,6 +11,7 @@ import MedicalNotice from '../components/MedicalNotice.astro';
 import { SITE } from '../lib/site.js';
 import { blogPostingJsonLd, medicalWebPageJsonLd } from '../lib/jsonld';
 import { entryHref, type Entry } from '../lib/entries';
+import { usableCover } from '../lib/cover';
 import { getViewCounts } from '../lib/analytics';
 import { getSettings, counterFor } from '../lib/settings';
 
@@ -19,8 +20,10 @@ interface Props {
 }
 
 const { entry } = Astro.props;
-const { title, description, pillar, date, updated, cover, coverAlt, sources, reviewedBy, evergreen } =
-  entry.data;
+const { title, description, pillar, date, updated, sources, reviewedBy, evergreen } = entry.data;
+
+// null when there is no cover OR no alt text — see src/lib/cover.ts.
+const cover = usableCover(entry);
 
 const { Content } = await render(entry);
 const href = entryHref(entry);
@@ -34,7 +37,7 @@ const views = counterFor((await getViewCounts()).get(href), await getSettings())
 
 // Open Graph card: the post's own cover when it has one, else the site default.
 const ogImage = cover
-  ? (await getImage({ src: cover, width: 1200, height: 630, fit: 'cover', format: 'png' })).src
+  ? (await getImage({ src: cover.src, width: 1200, height: 630, fit: 'cover', format: 'png' })).src
   : '/og-default.png';
 
 const COVER_WIDTHS = [720, 1080, 1440];
@@ -49,7 +52,7 @@ const jsonLd = [
 <Base title={title} description={description} ogImage={ogImage} ogType="article" jsonLd={jsonLd}>
   {cover && (
     <Fragment slot="head">
-      <PreloadImage src={cover} widths={COVER_WIDTHS} sizes={COVER_SIZES} format="avif" />
+      <PreloadImage src={cover.src} widths={COVER_WIDTHS} sizes={COVER_SIZES} format="avif" />
     </Fragment>
   )}
   <article class="shell article">
@@ -67,11 +70,11 @@ const jsonLd = [
       cover && (
         <figure class="article__cover">
           <Picture
-            src={cover}
+            src={cover.src}
             formats={['avif', 'webp']}
             widths={COVER_WIDTHS}
             sizes={COVER_SIZES}
-            alt={coverAlt ?? ''}
+            alt={cover.alt}
             loading="eager"
             fetchpriority="high"
             decoding="async"

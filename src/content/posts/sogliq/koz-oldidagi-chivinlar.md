@@ -4,10 +4,9 @@ description: >-
   Oq devorga qaraganda suzib yuradigan nuqta va iplar. Ular koʻpincha xavfsiz —
   lekin qaysi holatda shu kuniyoq shifokorga borish kerakligini bilib qoʻyish
   muhim.
-pillar: koz-sogligi
 date: 2026-06-22
 updated: 2026-07-20
-cover: ../../assets/posts/koz-oldidagi-chivinlar.jpg
+cover: ../../../assets/posts/koz-oldidagi-chivinlar.jpg
 coverAlt: Ochiq derazadan tushayotgan yorugʻlik va oq devor
 sources:
   - title: Floaters and Flashes

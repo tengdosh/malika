@@ -11,12 +11,19 @@ import { config, collection, singleton, fields } from '@keystatic/core';
  * compares them field by field and fails on mismatch.
  */
 
-/** Same six slugs as the Zod enum. Slugs stay ASCII; only the labels are Uzbek. */
+/**
+ * Pillars offered in the admin. Slugs stay ASCII; only the labels are Uzbek.
+ *
+ * `koz-sogligi` is deliberately ABSENT. Health posts are their own collection
+ * (`sogliq`) where `sources` is genuinely required, so the pillar is implied
+ * rather than chosen. Offering it here would let an unsourced health post be
+ * saved, and the only thing standing between that and a broken deploy would be
+ * a build error Malika never sees.
+ */
 const PILLAR_OPTIONS = [
   { label: 'Kundalik', value: 'kundalik' },
   { label: 'Kitoblar', value: 'kitoblar' },
   { label: 'Oʻqish va kasb', value: 'oqish-kasb' },
-  { label: 'Koʻz sogʻligʻi', value: 'koz-sogligi' },
   { label: 'Yoʻl', value: 'yol' },
   { label: 'Esse', value: 'esse' },
 ];
@@ -48,8 +55,14 @@ const sourceFields = fields.object(
   { label: 'Manba' },
 );
 
-/** posts and notes are the same shape; only the defaults and labels differ. */
-const entryFields = (evergreenDefault: boolean) => ({
+/**
+ * Shared by all three entry collections.
+ *
+ * `health: true` drops the pillar picker (implied by the collection) and makes
+ * `sources` genuinely required — enforced by the admin before save, which is the
+ * whole reason health posts are a separate collection.
+ */
+const entryFields = (evergreenDefault: boolean, health = false) => ({
   title: fields.slug({
     name: {
       label: 'Sarlavha',
@@ -69,12 +82,16 @@ const entryFields = (evergreenDefault: boolean) => ({
     validation: { isRequired: true, length: { max: 200 } },
   }),
 
-  pillar: fields.select({
-    label: 'Mavzu',
-    description: 'Yozuv qaysi boʻlimga tegishli.',
-    options: PILLAR_OPTIONS,
-    defaultValue: 'kundalik',
-  }),
+  ...(health
+    ? {}
+    : {
+        pillar: fields.select({
+          label: 'Mavzu',
+          description: 'Yozuv qaysi boʻlimga tegishli.',
+          options: PILLAR_OPTIONS,
+          defaultValue: 'kundalik',
+        }),
+      }),
 
   date: fields.date({
     label: 'Sana',
@@ -118,9 +135,13 @@ const entryFields = (evergreenDefault: boolean) => ({
 
   sources: fields.array(sourceFields, {
     label: 'Manbalar',
-    description:
-      'Koʻz sogʻligʻi yozuvlari uchun kamida bitta manba SHART. Boshqa mavzularda shart emas.',
+    description: health
+      ? 'Kamida bitta manba shart. Manbasiz saqlab boʻlmaydi.'
+      : 'Shart emas. Sogʻliq haqidagi yozuvlar uchun alohida boʻlim bor.',
     itemLabel: (props) => props.fields.title.value || 'Manba',
+    // The rule that makes the separate collection worth having: the admin will
+    // not let a health post be saved with an empty list.
+    ...(health ? { validation: { length: { min: 1 } } } : {}),
   }),
 
   reviewedBy: fields.text({
@@ -165,7 +186,7 @@ export default config({
   ui: {
     brand: { name: 'Malika Bobonazarova' },
     navigation: {
-      Yozuvlar: ['posts', 'notes'],
+      Yozuvlar: ['posts', 'sogliq', 'notes'],
       Sahifalar: ['men_haqimda', 'maxfiylik'],
       'Tez oʻzgaradigan': ['hozir', 'oqiyapman'],
       Sozlamalar: ['sozlamalar'],
@@ -181,6 +202,16 @@ export default config({
       entryLayout: 'content',
       columns: ['title', 'date'],
       schema: entryFields(false),
+    }),
+
+    sogliq: collection({
+      label: 'Koʻz sogʻligʻi yozuvi',
+      path: 'src/content/posts/sogliq/*',
+      slugField: 'title',
+      format: { contentField: 'content' },
+      entryLayout: 'content',
+      columns: ['title', 'date'],
+      schema: entryFields(false, true),
     }),
 
     notes: collection({

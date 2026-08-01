@@ -11,7 +11,7 @@
  *   3. Content schema fails when a koz-sogligi post has no sources
  *   4. Content schema fails when a cover image has no coverAlt
  */
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import {
   mkdtempSync,
   rmSync,
@@ -229,13 +229,12 @@ try {
   //         Asserting the predicate in isolation would not prove it is wired in.
   const schemaCases = [
     {
-      name: 'schema rejects a koz-sogligi post with no sources',
-      file: 'src/content/posts/__fixture-no-sources.md',
+      name: 'sogliq collection rejects a post with no sources',
+      file: 'src/content/posts/sogliq/__fixture-no-sources.md',
       body: [
         '---',
         'title: Fixture — manbasiz',
         'description: Bu yozuv manbasiz, shuning uchun build yiqilishi kerak.',
-        'pillar: koz-sogligi',
         'date: 2026-07-30',
         '---',
         '',
@@ -244,15 +243,16 @@ try {
       ].join('\n'),
     },
     {
-      name: 'schema rejects a cover image with no coverAlt',
-      file: 'src/content/posts/__fixture-no-alt.md',
+      // Backstop only: no CMS collection offers koz-sogligi as a pillar, so this
+      // is unreachable through the admin. It still guards hand-edited files.
+      name: 'backstop: a hand-written koz-sogligi post with no sources is rejected',
+      file: 'src/content/posts/__fixture-no-sources-hand.md',
       body: [
         '---',
-        'title: Fixture — altsiz muqova',
-        'description: Bu yozuvda coverAlt yoʻq, shuning uchun build yiqilishi kerak.',
-        'pillar: kundalik',
+        'title: Fixture — qoʻlda yozilgan, manbasiz',
+        'description: Adminda bunday qilib boʻlmaydi; qoʻlda yozilgan fayl uchun himoya.',
+        'pillar: koz-sogligi',
         'date: 2026-07-30',
-        'cover: ../../assets/covers/navbatchilikdan-keyin.jpg',
         '---',
         '',
         'Matn.',
@@ -268,6 +268,68 @@ try {
     expectFailure(testCase.name, fails('pnpm', ['exec', 'astro', 'build']));
 
     rmSync(testCase.file, { force: true });
+  }
+
+  // 5 — coverAlt: withhold the image, do NOT fail the build.
+  //     The opposite of a schema rule, and deliberately so: this failure is
+  //     visible to Malika without anyone reading a log — she opens the post, the
+  //     photo is missing, and she fixes it. A build failure would be invisible.
+  {
+    const post = 'src/content/posts/zz-fixture-noalt.md';
+    const image = 'src/assets/posts/zz-fixture-noalt.jpg';
+    copyFileSync('src/assets/posts/navbatchilikdan-keyin.jpg', image);
+    cleanups.push(() => rmSync(image, { force: true }));
+
+    writeFileSync(
+      post,
+      [
+        '---',
+        'title: Altsiz muqova',
+        'description: Rasm bor, tavsif yoʻq — build yiqilmasligi kerak.',
+        'pillar: kundalik',
+        'date: 2026-08-01',
+        'cover: ../../assets/posts/zz-fixture-noalt.jpg',
+        '---',
+        '',
+        'Matn.',
+        '',
+      ].join('\n'),
+    );
+    cleanups.push(() => rmSync(post, { force: true }));
+
+    // spawnSync, not execFileSync: the warning is written to stderr, and
+    // execFileSync only returns stdout.
+    const run = spawnSync('pnpm', ['exec', 'astro', 'build'], {
+      stdio: 'pipe',
+      encoding: 'utf8',
+    });
+    const built = run.status === 0;
+    const log = `${run.stdout ?? ''}${run.stderr ?? ''}`;
+
+    expectFailure('a cover with no alt text does NOT fail the build', built);
+
+    if (built) {
+      const html = readFileSync(
+        `${resolveDistDir()}/yozuvlar/zz-fixture-noalt/index.html`,
+        'utf8',
+      );
+      expectFailure(
+        'the post still renders',
+        html.includes('Altsiz muqova'),
+      );
+      expectFailure(
+        'the image is withheld rather than shipped without alt',
+        !html.includes('zz-fixture-noalt') || !/<img[^>]*alt=""/.test(html),
+        'no alt="" image',
+      );
+      expectFailure(
+        'a warning names the entry in the build log',
+        log.includes('[cover]') && log.includes('zz-fixture-noalt'),
+      );
+    }
+
+    rmSync(post, { force: true });
+    rmSync(image, { force: true });
   }
 } finally {
   cleanups.forEach((fn) => fn());

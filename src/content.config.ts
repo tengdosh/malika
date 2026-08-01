@@ -41,19 +41,21 @@ const source = z.object({
 });
 
 /**
- * The two editorial rules that are enforced mechanically rather than by review.
- * Do not weaken either one.
+ * Health posts must cite. This is now enforced by information architecture
+ * rather than validation: koz-sogligi entries live in their own `sogliq`
+ * collection, whose Keystatic counterpart marks `sources` as
+ * `length: { min: 1 }` — so the CMS will not let one be saved without a source.
  *
- *  - Health posts must cite. No unsourced health claim can ship, even by accident.
- *  - A cover image must have alt text.
+ * The refine below stays as a backstop for hand-edited files. It should be
+ * UNREACHABLE through the admin, because no CMS collection offers `koz-sogligi`
+ * as a pillar choice. scripts/check-fixtures.mjs proves it still bites.
  *
- * scripts/check-fixtures.mjs proves both still bite, on every CI run.
- *
- * NOTE: Keystatic has no cross-field validation, so neither rule can be enforced
- * in the CMS before saving — see README "Known gaps". They fail the build instead.
+ * There is deliberately no coverAlt rule. A cover without alt text renders the
+ * post WITHOUT the image and logs a warning (see src/lib/cover.ts): Malika opens
+ * her post, sees the photo missing, and fixes it herself. Self-correcting
+ * feedback beats a failed build she never sees.
  */
 const REQUIRE_SOURCES = 'koz-sogligi yozuvlari uchun kamida bitta manba shart';
-const REQUIRE_COVER_ALT = 'cover berilgan boʻlsa, coverAlt ham shart';
 
 const entryFields = (image: SchemaContext['image']) => ({
   title: z.string(),
@@ -69,22 +71,43 @@ const entryFields = (image: SchemaContext['image']) => ({
   reviewedBy: optionalText,
 });
 
-/* The refinements are applied inline rather than through a generic helper: a
-   generic wrapper erases the inferred object shape, and every downstream
+/* Refinements are applied inline rather than through a generic helper: a generic
+   wrapper erases the inferred object shape, and every downstream
    `entry.data.pillar` silently becomes `any`. */
+const requireSources = <T extends { pillar: string; sources: unknown[] }>(d: T) =>
+  d.pillar !== 'koz-sogligi' || d.sources.length > 0;
+
+/**
+ * Ordinary posts. The pattern is `*` not `**`, so `sogliq/` is NOT swept up
+ * here — it is its own collection below, exactly mirroring the Keystatic split.
+ */
 const posts = defineCollection({
-  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/posts' }),
+  loader: glob({ pattern: '*.{md,mdx}', base: './src/content/posts' }),
   schema: ({ image }) =>
     z
       .object({ ...entryFields(image), evergreen: z.boolean().default(false) })
-      .refine((d) => d.pillar !== 'koz-sogligi' || d.sources.length > 0, {
-        message: REQUIRE_SOURCES,
-        path: ['sources'],
-      })
-      .refine((d) => !d.cover || !!d.coverAlt, {
-        message: REQUIRE_COVER_ALT,
-        path: ['coverAlt'],
-      }),
+      .refine(requireSources, { message: REQUIRE_SOURCES, path: ['sources'] }),
+});
+
+/**
+ * Health posts. A separate authoring type because a health post genuinely is a
+ * different kind of thing: it requires sources, carries a disclaimer, emits
+ * MedicalWebPage schema and appears on /koz-sogligi.
+ *
+ * `pillar` is implied by the collection and never written to the file, so it
+ * cannot be set wrong. Public URLs stay flat — these merge into /yozuvlar/<slug>
+ * alongside ordinary posts; the split is an authoring concern, not a URL one.
+ */
+const sogliq = defineCollection({
+  loader: glob({ pattern: '*.{md,mdx}', base: './src/content/posts/sogliq' }),
+  schema: ({ image }) =>
+    z.object({
+      ...entryFields(image),
+      pillar: z.literal('koz-sogligi').default('koz-sogligi'),
+      evergreen: z.boolean().default(false),
+      // Required here, not conditionally: this collection is health posts only.
+      sources: z.array(source).min(1, REQUIRE_SOURCES),
+    }),
 });
 
 /** Same schema as posts; notes are evergreen by default and show no publish date. */
@@ -93,14 +116,7 @@ const notes = defineCollection({
   schema: ({ image }) =>
     z
       .object({ ...entryFields(image), evergreen: z.boolean().default(true) })
-      .refine((d) => d.pillar !== 'koz-sogligi' || d.sources.length > 0, {
-        message: REQUIRE_SOURCES,
-        path: ['sources'],
-      })
-      .refine((d) => !d.cover || !!d.coverAlt, {
-        message: REQUIRE_COVER_ALT,
-        path: ['coverAlt'],
-      }),
+      .refine(requireSources, { message: REQUIRE_SOURCES, path: ['sources'] }),
 });
 
 /**
@@ -153,4 +169,4 @@ const site = defineCollection({
     }),
 });
 
-export const collections = { posts, notes, site };
+export const collections = { posts, sogliq, notes, site };

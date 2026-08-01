@@ -12,6 +12,7 @@ const STEPS = [
   { name: 'uzbek', label: 'Uzbek apostrophes (U+02BB / U+02BC)', cmd: ['node', ['scripts/check-uzbek.mjs']] },
   { name: 'contrast', label: 'WCAG AA contrast, both themes', cmd: ['node', ['scripts/check-contrast.mjs']] },
   { name: 'schema', label: 'Zod / Keystatic schema sync', cmd: ['node', ['scripts/check-schema-sync.mjs']] },
+  { name: 'slugs', label: 'No slug collisions across collections', cmd: ['node', ['scripts/check-slug-collisions.mjs']] },
   { name: 'types', label: 'TypeScript + Astro content schema', cmd: ['pnpm', ['exec', 'astro', 'check']] },
   { name: 'build', label: 'Production build', cmd: ['pnpm', ['exec', 'astro', 'build']], required: true },
   { name: 'glyphs', label: 'Font glyph coverage', cmd: ['node', ['scripts/check-glyphs.mjs']] },

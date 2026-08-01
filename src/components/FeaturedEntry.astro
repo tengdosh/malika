@@ -2,6 +2,7 @@
 import { Picture } from 'astro:assets';
 import PillarChip from './PillarChip.astro';
 import { entryHref, type Entry } from '../lib/entries';
+import { usableCover } from '../lib/cover';
 import { formatDate, isoDate } from '../lib/format';
 
 interface Props {
@@ -9,8 +10,9 @@ interface Props {
 }
 
 const { entry } = Astro.props;
-const { title, description, pillar, date, cover, coverAlt, sources } = entry.data;
+const { title, description, pillar, date, sources } = entry.data;
 const href = entryHref(entry);
+const cover = usableCover(entry);
 
 /**
  * With no cover the featured slot does NOT render an empty box. It falls back to
@@ -26,11 +28,11 @@ const hasCover = Boolean(cover);
     cover && (
       <a class="featured__media" href={href} tabindex="-1" aria-hidden="true">
         <Picture
-          src={cover}
+          src={cover.src}
           formats={['avif', 'webp']}
           widths={[560, 840, 1120]}
           sizes="(min-width: 46rem) 46vw, 92vw"
-          alt={coverAlt ?? ''}
+          alt={cover.alt}
           loading="lazy"
           decoding="async"
         />

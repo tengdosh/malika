@@ -14,6 +14,7 @@
     "check:uzbek": "node scripts/check-uzbek.mjs",
     "check:glyphs": "node scripts/check-glyphs.mjs",
     "check:schema": "node scripts/check-schema-sync.mjs",
+    "check:slugs": "node scripts/check-slug-collisions.mjs",
     "check:cms-isolation": "node scripts/check-keystatic-isolation.mjs",
     "check:a11y": "node scripts/check-a11y.mjs",
     "check:behaviour": "node scripts/check-behaviour.mjs",

@@ -2,6 +2,7 @@
 import { Picture } from 'astro:assets';
 import PillarChip from './PillarChip.astro';
 import { entryHref, type Entry } from '../lib/entries';
+import { usableCover } from '../lib/cover';
 import { formatDate, isoDate } from '../lib/format';
 
 interface Props {
@@ -11,8 +12,9 @@ interface Props {
 }
 
 const { entry, evergreenLabel = false } = Astro.props;
-const { title, description, pillar, date, cover, coverAlt } = entry.data;
+const { title, description, pillar, date } = entry.data;
 const href = entryHref(entry);
+const cover = usableCover(entry);
 
 // No cover: the row collapses to a single column with no thumbnail gutter.
 // A missing photo must never make a post look broken.
@@ -24,11 +26,11 @@ const hasThumb = Boolean(cover);
     cover && (
       <a class="row__thumb" href={href} tabindex="-1" aria-hidden="true">
         <Picture
-          src={cover}
+          src={cover.src}
           formats={['avif', 'webp']}
           widths={[104, 208]}
           sizes="(min-width: 40rem) 6.5rem, 4.75rem"
-          alt={coverAlt ?? ''}
+          alt={cover.alt}
           loading="lazy"
           decoding="async"
         />
