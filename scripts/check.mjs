@@ -16,6 +16,7 @@ const STEPS = [
   { name: 'glyphs', label: 'Font glyph coverage', cmd: ['node', ['scripts/check-glyphs.mjs']] },
   { name: 'a11y', label: 'axe + structural a11y', cmd: ['node', ['scripts/check-a11y.mjs']] },
   { name: 'behaviour', label: 'Theme/text-size persistence, reduced motion', cmd: ['node', ['scripts/check-behaviour.mjs']] },
+  { name: 'analytics', label: 'Analytics pipeline + outage tolerance', cmd: ['node', ['scripts/check-analytics.mjs']] },
   { name: 'lighthouse', label: 'Lighthouse budget', cmd: ['node', ['scripts/check-lighthouse.mjs']] },
   { name: 'fixtures', label: 'Guardrails still bite', cmd: ['node', ['scripts/check-fixtures.mjs']] },
 ];
