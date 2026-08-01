@@ -8,6 +8,11 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
+
+    # Needed by the normalise step below, which commits back to the branch.
+    permissions:
+      contents: write
+
     steps:
       - uses: actions/checkout@v4
 
@@ -19,9 +24,35 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # Content is normalised, source code is linted. Malika's phone keyboard
+      # cannot produce U+02BB, so `o'qish` is repaired here rather than failing a
+      # check she never sees. Runs before `pnpm check`, which asserts the tree is
+      # already normalised.
+      - name: Normalise Uzbek apostrophes in content
+        run: pnpm normalize:uzbek
+
+      - name: Commit normalised content
+        if: github.event_name == 'push'
+        run: |
+          if [ -n "$(git status --porcelain src/content)" ]; then
+            git config user.name  'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add src/content
+            git commit -m 'chore(content): normalise Uzbek apostrophes'
+            git push
+          else
+            echo 'content already normalised'
+          fi
+
       # axe and Lighthouse need a real browser. scripts/lib/browser.mjs also
       # picks up CHROME_PATH or a system Chrome if one is already present.
+      #
+      # Not `pnpm exec puppeteer`: this project depends on puppeteer-core, which
+      # ships no CLI, and the full puppeteer package is not a dependency — so
+      # that command exits 127 and every browser-backed check fails after it.
+      # @puppeteer/browsers is the installer, and --path lands Chrome exactly
+      # where findChrome() looks for it.
       - name: Install Chrome
-        run: pnpm exec puppeteer browsers install chrome
+        run: pnpm dlx @puppeteer/browsers install chrome@stable --path ~/.cache/puppeteer
 
       - run: pnpm check

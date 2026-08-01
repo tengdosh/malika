@@ -24,6 +24,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { analyseGlyphCoverage as analyse } from './lib/glyph-coverage.mjs';
 import { resolveDistDir } from './lib/browser.mjs';
+import { CONTENT_PATHS, assetPath } from '../src/lib/content-paths.js';
 
 let failures = 0;
 const cleanups = [];
@@ -195,6 +196,78 @@ try {
         html.includes('Admin orqali yozilgan'),
       );
     }
+
+    rmSync(post, { force: true });
+    rmSync(image, { force: true });
+  }
+
+  // 2b² — The same thing for a HEALTH post, which is the case 2b cannot reach.
+  //       The three entry collections do not share a depth: sogliq lives at
+  //       src/content/posts/sogliq/*, one level below posts and notes. An
+  //       uploaded image's path is written relative to the entry file, so one
+  //       shared publicPath is wrong for exactly one collection — and wrong
+  //       invisibly, because every hand-written post already on disk has the
+  //       right path. It surfaces the first time Malika adds a cover to a
+  //       koʻz sogʻligʻi post: the deploy dies and she is never told why.
+  {
+    const post = 'src/content/posts/sogliq/zz-fixture-sogliq.md';
+    const image = 'src/assets/posts/zz-fixture-sogliq.jpg';
+    copyFileSync('src/assets/posts/navbatchilikdan-keyin.jpg', image);
+    cleanups.push(() => rmSync(image, { force: true }));
+
+    const healthPost = (cover) =>
+      [
+        '---',
+        'title: Sogʻliq — admin orqali muqova',
+        'description: Keystatic yozadigan shaklda saqlangan sogʻliq yozuvi.',
+        'date: 2026-08-01',
+        'draft: false',
+        `cover: ${cover}`,
+        'coverAlt: Sinov uchun rasm',
+        'sources:',
+        '  - title: Floaters and Flashes',
+        '    publisher: American Academy of Ophthalmology',
+        '---',
+        '',
+        'Matn.',
+        '',
+      ].join('\n');
+
+    // Not a literal: this is the path the admin actually writes, read from the
+    // same helper keystatic.config.ts uses. If the config stops deriving it,
+    // check-schema-sync fails; if the derivation is wrong, the build below does.
+    const { publicPath } = assetPath(CONTENT_PATHS.sogliq, 'posts');
+    writeFileSync(post, healthPost(`${publicPath}zz-fixture-sogliq.jpg`));
+    cleanups.push(() => rmSync(post, { force: true }));
+
+    let built = true;
+    try {
+      execFileSync('pnpm', ['exec', 'astro', 'build'], { stdio: 'pipe' });
+    } catch {
+      built = false;
+    }
+    expectFailure('a HEALTH post with a CMS-uploaded cover BUILDS', built);
+
+    if (built) {
+      const html = readFileSync(
+        `${resolveDistDir()}/yozuvlar/zz-fixture-sogliq/index.html`,
+        'utf8',
+      );
+      expectFailure(
+        "the health post's uploaded image is optimised by astro:assets",
+        /\.avif/.test(html) && /\.webp/.test(html) && /srcset=/.test(html),
+      );
+    }
+
+    // The defect itself: the shallower path posts/ and notes/ use. If this ever
+    // stops failing, the two depths have collapsed and the fixture above is no
+    // longer proving anything.
+    const { publicPath: shallow } = assetPath(CONTENT_PATHS.posts, 'posts');
+    writeFileSync(post, healthPost(`${shallow}zz-fixture-sogliq.jpg`));
+    expectFailure(
+      'the two-level path (one shared constant) FAILS on a health post',
+      fails('pnpm', ['exec', 'astro', 'build']),
+    );
 
     rmSync(post, { force: true });
     rmSync(image, { force: true });
@@ -373,6 +446,112 @@ try {
     expectFailure(testCase.name, fails('pnpm', ['exec', 'astro', 'build']));
 
     rmSync(testCase.file, { force: true });
+  }
+
+  // 4b — The Uzbek split: content is NORMALISED, source code is LINTED.
+  //      Malika's phone keyboard produces `o'qish` and cannot produce U+02BB.
+  //      Failing a check she never sees would mean the site silently stops
+  //      updating, so her text is repaired; a developer's UI string is not.
+  {
+    const dir = mkdtempSync(join(tmpdir(), 'uzbek-normalise-'));
+    cleanups.push(() => rmSync(dir, { recursive: true, force: true }));
+    const doc = join(dir, 'post.md');
+
+    writeFileSync(
+      doc,
+      [
+        '---',
+        "description: Bugun ko'p o'qidim.",
+        'sources:',
+        '  - title: Manba',
+        "    url: https://example.com/o'qish/g'alati",
+        '---',
+        '',
+        "Bugun ko'p o'qidim, san'at haqida gaplashdik.",
+        '',
+        'Oldingi yozuvda hero’dan gapirgandim.',
+        '',
+        '```js',
+        "const o'x = 1;",
+        '```',
+        '',
+      ].join('\n'),
+    );
+
+    execFileSync('node', ['scripts/normalize-uzbek.mjs', doc], { stdio: 'pipe' });
+    const after = readFileSync(doc, 'utf8');
+
+    expectFailure("o'qish -> oʻqish (U+02BB)", after.includes('oʻqidim'));
+    expectFailure("san'at -> sanʼat (U+02BC)", after.includes('sanʼat'));
+    expectFailure('a foreign stem keeps U+2019 (hero’dan)', after.includes('hero’dan'));
+    expectFailure(
+      'a URL in frontmatter is untouched',
+      after.includes("url: https://example.com/o'qish/g'alati"),
+    );
+    expectFailure('a fenced code block is untouched', after.includes("const o'x = 1;"));
+    expectFailure(
+      'frontmatter prose is normalised too',
+      after.includes('description: Bugun koʻp oʻqidim.'),
+    );
+
+    // Running it again must change nothing, or CI would commit on every push.
+    execFileSync('node', ['scripts/normalize-uzbek.mjs', doc], { stdio: 'pipe' });
+    expectFailure('normalising twice is a no-op', readFileSync(doc, 'utf8') === after);
+
+    // The other half of the split: the same character, hand-written in a .astro
+    // UI string, must still fail the lint.
+    const page = 'src/components/ZzFixtureUzbek.astro';
+    writeFileSync(page, "<p>Bugun ko'p oʻqidim.</p>\n");
+    cleanups.push(() => rmSync(page, { force: true }));
+    expectFailure(
+      'a straight apostrophe in a .astro file still FAILS the lint',
+      fails('node', ['scripts/check-uzbek.mjs']),
+    );
+    rmSync(page, { force: true });
+
+    expectFailure(
+      'the real source tree passes the lint (control: must NOT fail)',
+      !fails('node', ['scripts/check-uzbek.mjs']),
+    );
+
+    // And content is deliberately NOT linted — it is normalised instead.
+    const contentFile = 'src/content/posts/zz-fixture-uzbek.md';
+    writeFileSync(
+      contentFile,
+      [
+        '---',
+        "title: Telefondan yozilgan",
+        "description: Tekis apostrof bilan yozilgan matn build'ni yiqitmasligi kerak.",
+        'pillar: kundalik',
+        'date: 2026-08-01',
+        '---',
+        '',
+        "Bugun ko'p o'qidim.",
+        '',
+      ].join('\n'),
+    );
+    cleanups.push(() => rmSync(contentFile, { force: true }));
+
+    expectFailure(
+      'a straight apostrophe in CONTENT does NOT fail the lint',
+      !fails('node', ['scripts/check-uzbek.mjs']),
+    );
+    expectFailure(
+      '...but --check reports it as stale',
+      fails('node', ['scripts/normalize-uzbek.mjs', '--check']),
+    );
+
+    execFileSync('node', ['scripts/normalize-uzbek.mjs'], { stdio: 'pipe' });
+    expectFailure(
+      '...and the normaliser repairs it in place',
+      readFileSync(contentFile, 'utf8').includes('Bugun koʻp oʻqidim.'),
+    );
+    expectFailure(
+      'the tree is normalised again afterwards (control: must NOT fail)',
+      !fails('node', ['scripts/normalize-uzbek.mjs', '--check']),
+    );
+
+    rmSync(contentFile, { force: true });
   }
 
   // 5 — coverAlt: withhold the image, do NOT fail the build.
