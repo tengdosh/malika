@@ -10,15 +10,15 @@
  * slow, misconfigured or empty, every entry point resolves to "no data" and the
  * build succeeds. A stats outage must never block a deploy.
  */
-import type { AnalyticsSnapshot } from './types';
-import { fetchUmami } from './umami';
-import { fetchPlausible } from './plausible';
+import type { AnalyticsSnapshot } from './types.ts';
+import { fetchUmami } from './umami.ts';
+import { fetchPlausible } from './plausible.ts';
 
-export type { AnalyticsSnapshot, NamedCount, PageCount, Totals } from './types';
+export type { AnalyticsSnapshot, NamedCount, PageCount, Totals } from './types.ts';
 
 /** import.meta.env carries .env values; process.env carries host-configured ones. */
 const env = (key: string): string | undefined => {
-  const fromMeta = (import.meta.env as Record<string, string | undefined>)[key];
+  const fromMeta = (import.meta.env as Record<string, string | undefined> | undefined)?.[key];
   return fromMeta ?? process.env[key];
 };
 

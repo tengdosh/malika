@@ -14,8 +14,8 @@ import {
   EMPTY_TOTALS,
   num,
   safeJson,
-} from './types';
-import { normalisePath } from './umami';
+} from './types.ts';
+import { normalisePath } from './umami.ts';
 
 interface PlausibleConfig {
   apiUrl: string;

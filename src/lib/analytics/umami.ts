@@ -17,7 +17,7 @@ import {
   EMPTY_TOTALS,
   num,
   safeJson,
-} from './types';
+} from './types.ts';
 
 interface UmamiConfig {
   apiUrl: string;
