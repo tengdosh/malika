@@ -58,6 +58,7 @@ const STEPS = [
   { name: 'slugs', label: 'No slug collisions across collections', cmd: ['node', ['scripts/check-slug-collisions.mjs']] },
   { name: 'types', label: 'TypeScript + Astro content schema', cmd: ['pnpm', ['exec', 'astro', 'check']] },
   { name: 'build', label: 'Production build', cmd: ['pnpm', ['exec', 'astro', 'build']], required: true },
+  { name: 'base', label: 'Internal links respect the base path', cmd: ['node', ['scripts/check-base-paths.mjs']] },
   { name: 'glyphs', label: 'Font glyph coverage', cmd: ['node', ['scripts/check-glyphs.mjs']] },
   { name: 'cms-isolation', label: 'No CMS/React JS on public pages', cmd: ['node', ['scripts/check-keystatic-isolation.mjs']] },
   { name: 'og', label: 'Open Graph cards + Uzbek glyphs', cmd: ['node', ['scripts/check-og.mjs']] },

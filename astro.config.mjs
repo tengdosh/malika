@@ -9,6 +9,7 @@ import node from '@astrojs/node';
 import { fileURLToPath } from 'node:url';
 
 import { SITE } from './src/lib/site.js';
+import { rehypeBasePath } from './scripts/lib/rehype-base-path.mjs';
 
 /**
  * Deploy target. Defaults to the canonical domain at the root; the live
@@ -124,6 +125,9 @@ export default defineConfig({
   ],
   markdown: {
     shikiConfig: { theme: 'github-light', wrap: true },
+    /* Markdown links are the one place `base` is not applied automatically.
+       Authors write /hozir; this makes it /malika/hozir at build time. */
+    rehypePlugins: [rehypeBasePath(BASE)],
   },
   image: {
     // No remote images anywhere on this site.
