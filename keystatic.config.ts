@@ -186,8 +186,8 @@ export default config({
       ? {
           kind: 'github',
           repo: {
-            owner: import.meta.env.PUBLIC_KEYSTATIC_GITHUB_OWNER ?? 'malika-bobonazarova',
-            name: import.meta.env.PUBLIC_KEYSTATIC_GITHUB_REPO ?? 'malika-bobonazarova.uz',
+            owner: import.meta.env.PUBLIC_KEYSTATIC_GITHUB_OWNER ?? 'tengdosh',
+            name: import.meta.env.PUBLIC_KEYSTATIC_GITHUB_REPO ?? 'malika',
           },
         }
       : { kind: 'local' },
