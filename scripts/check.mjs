@@ -52,7 +52,11 @@ process.on('SIGINT', () => {
 });
 
 const STEPS = [
-  { name: 'uzbek', label: 'Uzbek apostrophes (U+02BB / U+02BC)', cmd: ['node', ['scripts/check-uzbek.mjs']] },
+  { name: 'uzbek', label: 'Uzbek apostrophes in source (U+02BB / U+02BC)', cmd: ['node', ['scripts/check-uzbek.mjs']] },
+  // Content is normalised rather than linted, and CI commits the result back —
+  // so this only ever fails for someone running the checks locally, which is
+  // exactly who can fix it with `pnpm normalize:uzbek`.
+  { name: 'normalized', label: 'Content apostrophes normalised', cmd: ['node', ['scripts/normalize-uzbek.mjs', '--check']] },
   { name: 'contrast', label: 'WCAG AA contrast, both themes', cmd: ['node', ['scripts/check-contrast.mjs']] },
   { name: 'schema', label: 'Zod / Keystatic schema sync', cmd: ['node', ['scripts/check-schema-sync.mjs']] },
   { name: 'slugs', label: 'No slug collisions across collections', cmd: ['node', ['scripts/check-slug-collisions.mjs']] },

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Uzbek apostrophe lint.
+ * Uzbek apostrophe lint — for source code only.
  *
  * The single most common way this codebase breaks. In Uzbek (Latin):
  *   Oʻ / Gʻ            -> U+02BB  modifier letter turned comma
@@ -11,6 +11,12 @@
  * Editors, phone keyboards and copy-paste from Word all produce them silently,
  * and the result renders in a fallback face — visible in almost every sentence.
  *
+ * **Content is deliberately not linted here.** src/content/** is normalised
+ * automatically by scripts/normalize-uzbek.mjs instead: Malika writes on a phone
+ * whose keyboard cannot produce U+02BB, and failing a check she never sees would
+ * only mean the site silently stops updating. UI strings written by a developer
+ * are a different matter — those are hand-correct, and stay linted.
+ *
  * Usage:
  *   node scripts/check-uzbek.mjs                 # lint the real source tree
  *   node scripts/check-uzbek.mjs <glob> [<glob>] # lint specific paths (fixtures)
@@ -18,7 +24,7 @@
 import { readFile } from 'node:fs/promises';
 import { globSync } from 'glob';
 
-const DEFAULT_PATTERNS = ['src/content/**/*.{md,mdx}', 'src/**/*.astro'];
+const DEFAULT_PATTERNS = ['src/**/*.astro', 'src/lib/**/*.{js,mjs,ts}'];
 
 /**
  * Straight apostrophe or left single quote after o/O/g/G — and followed by a

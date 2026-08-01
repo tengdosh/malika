@@ -12,6 +12,8 @@
     "fonts": "node scripts/sync-fonts.mjs",
     "check:types": "astro check",
     "check:uzbek": "node scripts/check-uzbek.mjs",
+    "normalize:uzbek": "node scripts/normalize-uzbek.mjs",
+    "check:normalized": "node scripts/normalize-uzbek.mjs --check",
     "check:base": "node scripts/check-base-paths.mjs",
     "check:glyphs": "node scripts/check-glyphs.mjs",
     "check:og": "node scripts/check-og.mjs",

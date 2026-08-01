@@ -1,0 +1,13 @@
+{
+  "note": "Foreign stems that take an Uzbek suffix. These keep U+2019 (’) instead of being rewritten to U+02BB or U+02BC — the stem is not an Uzbek word, so neither Uzbek apostrophe applies. Matched against the whole word before the apostrophe, case-insensitively: 'hero' matches hero'dan, not superhero'dan. Add a stem here the first time it is written, not after it has shipped wrong.",
+  "foreignStems": [
+    "hero",
+    "floater",
+    "floaters",
+    "smartphone",
+    "email",
+    "online",
+    "blog",
+    "video"
+  ]
+}

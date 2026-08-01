@@ -125,7 +125,7 @@ export async function fetchUmami(config: UmamiConfig): Promise<AnalyticsSnapshot
   };
 }
 
-/** Strip query strings and trailing slashes so paths match Astro's routes. */
+/** Strip query strings and trailing slashes so paths match Astro’s routes. */
 export function normalisePath(raw: string): string {
   const path = (raw || '/').split('?')[0]!.split('#')[0]!;
   const trimmed = path.replace(/\/+$/, '');
