@@ -16,6 +16,10 @@ export interface SiteSettings {
   footerBio: string;
   hisoblagichKorsatilsin: boolean;
   hisoblagichMinimum: number;
+  /** Search-console fallbacks; DNS TXT is preferable. Rendered only when set. */
+  googleSiteVerification?: string;
+  yandexVerification?: string;
+  bingVerification?: string;
 }
 
 const FALLBACK: SiteSettings = {
@@ -35,6 +39,9 @@ export async function getSettings(): Promise<SiteSettings> {
     footerBio: entry.data.footerBio ?? FALLBACK.footerBio,
     hisoblagichKorsatilsin: entry.data.hisoblagichKorsatilsin,
     hisoblagichMinimum: entry.data.hisoblagichMinimum,
+    googleSiteVerification: entry.data.googleSiteVerification,
+    yandexVerification: entry.data.yandexVerification,
+    bingVerification: entry.data.bingVerification,
   };
 }
 

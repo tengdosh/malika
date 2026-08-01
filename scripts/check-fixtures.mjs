@@ -152,6 +152,63 @@ try {
     rmSync(image, { force: true });
   }
 
+  // 2c — altQueries must never reach visible text.
+  //      Injecting search variants into the body (or a hidden div) is cloaking,
+  //      and on a YMYL health page it does real damage. A nonsense token proves
+  //      it: any occurrence outside meta[name=keywords] would have to be ours.
+  {
+    const post = 'src/content/posts/zz-fixture-altq.md';
+    const TOKEN = 'zzqvariantzz';
+    writeFileSync(
+      post,
+      [
+        '---',
+        'title: Altqueries sinovi',
+        'description: Qidiruv variantlari koʻrinadigan matnga tushmasligi kerak.',
+        'pillar: kundalik',
+        'date: 2026-08-01',
+        'altQueries:',
+        `  - ${TOKEN}`,
+        '  - koz oldida chivin',
+        '---',
+        '',
+        'Matn.',
+        '',
+      ].join('\n'),
+    );
+    cleanups.push(() => rmSync(post, { force: true }));
+
+    let built = true;
+    try {
+      execFileSync('pnpm', ['exec', 'astro', 'build'], { stdio: 'pipe' });
+    } catch {
+      built = false;
+    }
+    expectFailure('a post with altQueries builds', built);
+
+    if (built) {
+      const html = readFileSync(`${resolveDistDir()}/yozuvlar/zz-fixture-altq/index.html`, 'utf8');
+      const inKeywords = new RegExp(
+        `<meta[^>]+name="keywords"[^>]+content="[^"]*${TOKEN}[^"]*"`,
+      ).test(html);
+      expectFailure('altQueries reach meta[name=keywords]', inKeywords);
+
+      // Strip the head, then look for the token anywhere a reader could see it.
+      const body = html.slice(html.indexOf('<body'));
+      expectFailure(
+        'altQueries appear in NO visible body text',
+        !body.includes(TOKEN),
+        'no cloaking',
+      );
+      expectFailure(
+        'the page ships no hidden-text container',
+        !/(display:\s*none|visibility:\s*hidden|text-indent:\s*-)/i.test(body),
+      );
+    }
+
+    rmSync(post, { force: true });
+  }
+
   // 3 — Coverage split: content warns and ships, UI strings fail.
   //     This is the rule that matters most operationally — Malika writes on a
   //     phone, and a character she typed must never stop a deploy.

@@ -69,6 +69,13 @@ const entryFields = (image: SchemaContext['image']) => ({
   coverAlt: optionalText,
   sources: z.array(source).default([]),
   reviewedBy: optionalText,
+  /**
+   * Everyday spellings people actually type: without the ʻ (`koz oldida chivin`)
+   * or in Russian (`мушки перед глазами`). Feeds meta[name=keywords] and, later,
+   * a search index — never visible body text. Injecting them into the page is
+   * cloaking, and on a YMYL page it does real damage.
+   */
+  altQueries: z.array(z.string()).default([]),
 });
 
 /* Refinements are applied inline rather than through a generic helper: a generic
@@ -166,6 +173,12 @@ const site = defineCollection({
       footerBio: optionalText,
       hisoblagichKorsatilsin: z.boolean().default(true),
       hisoblagichMinimum: z.coerce.number().min(0).default(0),
+
+      /* Search-console tokens. DNS TXT verification is preferable and needs
+         none of these; they are the fallback, pasteable from the admin. */
+      googleSiteVerification: optionalText,
+      yandexVerification: optionalText,
+      bingVerification: optionalText,
     }),
 });
 

@@ -36,6 +36,7 @@ const EXPECTED = {
     'coverAlt',
     'sources',
     'reviewedBy',
+    'altQueries',
   ],
   health: [
     'title',
@@ -49,6 +50,7 @@ const EXPECTED = {
     'coverAlt',
     'sources',
     'reviewedBy',
+    'altQueries',
   ],
   source: ['title', 'publisher', 'year', 'url'],
   singletons: [
@@ -67,6 +69,9 @@ const EXPECTED = {
     'footerBio',
     'hisoblagichKorsatilsin',
     'hisoblagichMinimum',
+    'googleSiteVerification',
+    'yandexVerification',
+    'bingVerification',
   ],
   book: ['title', 'author', 'startedOn', 'progress', 'note', 'cover', 'coverAlt'],
 };

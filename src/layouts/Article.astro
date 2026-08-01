@@ -9,8 +9,8 @@ import PreloadImage from '../components/PreloadImage.astro';
 import SourceList from '../components/SourceList.astro';
 import MedicalNotice from '../components/MedicalNotice.astro';
 import { SITE } from '../lib/site.js';
-import { blogPostingJsonLd, medicalWebPageJsonLd } from '../lib/jsonld';
-import { entryHref, type Entry } from '../lib/entries';
+import { blogPostingJsonLd, medicalWebPageJsonLd, breadcrumbJsonLd } from '../lib/jsonld';
+import { entryHref, entrySlug, type Entry } from '../lib/entries';
 import { usableCover } from '../lib/cover';
 import { getViewCounts } from '../lib/analytics';
 import { getSettings, counterFor } from '../lib/settings';
@@ -20,7 +20,8 @@ interface Props {
 }
 
 const { entry } = Astro.props;
-const { title, description, pillar, date, updated, sources, reviewedBy, evergreen } = entry.data;
+const { title, description, pillar, date, updated, sources, reviewedBy, evergreen, altQueries } =
+  entry.data;
 
 // null when there is no cover OR no alt text — see src/lib/cover.ts.
 const cover = usableCover(entry);
@@ -36,20 +37,39 @@ const isHealth = pillar === 'koz-sogligi';
 const views = counterFor((await getViewCounts()).get(href), await getSettings());
 
 // Open Graph card: the post's own cover when it has one, else the site default.
+/**
+ * Share preview. A real photograph beats a generated card, so a cover wins when
+ * there is one; otherwise the per-post card from /og/<slug>.png. That endpoint
+ * cannot fail — it serves og-default.png if rendering throws.
+ */
 const ogImage = cover
   ? (await getImage({ src: cover.src, width: 1200, height: 630, fit: 'cover', format: 'png' })).src
-  : '/og-default.png';
+  : `/og/${entrySlug(entry)}.png`;
 
 const COVER_WIDTHS = [720, 1080, 1440];
 const COVER_SIZES = '(min-width: 72rem) 66rem, 92vw';
 
+const origin = import.meta.env.PUBLIC_SITE_ORIGIN || SITE.origin;
+
 const jsonLd = [
-  blogPostingJsonLd(entry, url, new URL(ogImage, SITE.origin).href),
+  blogPostingJsonLd(entry, url, new URL(ogImage, origin).href),
+  breadcrumbJsonLd(entry, url, origin),
+  // MedicalWebPage only on health posts; lastReviewed comes from `updated`,
+  // falling back to `date`.
   ...(isHealth ? [medicalWebPageJsonLd(entry, url)] : []),
 ];
 ---
 
-<Base title={title} description={description} ogImage={ogImage} ogType="article" jsonLd={jsonLd}>
+<Base
+  title={title}
+  description={description}
+  ogImage={ogImage}
+  ogType="article"
+  jsonLd={jsonLd}
+  publishedTime={date}
+  modifiedTime={updated}
+  keywords={altQueries}
+>
   {cover && (
     <Fragment slot="head">
       <PreloadImage src={cover.src} widths={COVER_WIDTHS} sizes={COVER_SIZES} format="avif" />

@@ -149,6 +149,15 @@ const entryFields = (evergreenDefault: boolean, health = false) => ({
     description: 'Yozuvni shifokor koʻrib chiqqan boʻlsa, ismini yozing. Shart emas.',
   }),
 
+  altQueries: fields.array(fields.text({ label: 'Soʻz yoki ibora' }), {
+    label: 'Boshqacha qidiriladigan soʻzlar',
+    description:
+      'Odamlar qidiruvda koʻpincha ʻ belgisisiz yozadi ("koz oldida chivin") yoki ruscha ' +
+      'qidiradi ("мушки перед глазами"). Shunday variantlarni shu yerga qoʻshing. ' +
+      'Ular yozuv matnida koʻrinmaydi — faqat qidiruv tizimlari uchun. Shart emas.',
+    itemLabel: (props) => props.value || 'Soʻz',
+  }),
+
   content: fields.markdoc({
     label: 'Matn',
     // .md, so Astro reads these exactly as before — no MDX pipeline change.
@@ -360,6 +369,20 @@ export default config({
             'Shu sondan kam oʻqilgan yozuvlarda hisoblagich koʻrsatilmaydi. 0 boʻlsa — hammasida koʻrinadi.',
           defaultValue: 0,
           validation: { min: 0 },
+        }),
+
+        googleSiteVerification: fields.text({
+          label: 'Google tasdiqlash kodi',
+          description:
+            'Google Search Console bergan kod. Odatda kerak emas — domen orqali tasdiqlash afzal. Shart emas.',
+        }),
+        yandexVerification: fields.text({
+          label: 'Yandex tasdiqlash kodi',
+          description: 'Yandex Webmaster bergan kod. Shart emas.',
+        }),
+        bingVerification: fields.text({
+          label: 'Bing tasdiqlash kodi',
+          description: 'Bing Webmaster Tools bergan kod. Shart emas.',
         }),
       },
     }),

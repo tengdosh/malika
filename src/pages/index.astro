@@ -11,7 +11,7 @@ import EntryRow from '../components/EntryRow.astro';
 import ReadingCard from '../components/ReadingCard.astro';
 import TelegramCta from '../components/TelegramCta.astro';
 import { getPosts, splitFeatured } from '../lib/entries';
-import { personJsonLd } from '../lib/jsonld';
+import { personJsonLd, webSiteJsonLd } from '../lib/jsonld';
 import { getSettings } from '../lib/settings';
 import { withBase } from '../lib/site.js';
 import { SITE } from '../lib/site.js';
@@ -24,6 +24,7 @@ const about = await getEntry('site', 'men_haqimda');
 const now = await getEntry('site', 'hozir');
 const reading = await getEntry('site', 'oqiyapman');
 const settings = await getSettings();
+const origin = import.meta.env.PUBLIC_SITE_ORIGIN || SITE.origin;
 
 const portrait = about?.data.portrait;
 const book = reading?.data.book;
@@ -33,7 +34,7 @@ const PORTRAIT_WIDTHS = [320, 640];
 const PORTRAIT_SIZES = '(min-width: 52rem) 20rem, min(100vw, 20rem)';
 ---
 
-<Base title={SITE.name} jsonLd={[personJsonLd(settings)]}>
+<Base title={SITE.name} jsonLd={[personJsonLd(settings), webSiteJsonLd(origin)]}>
   {portrait && (
     <Fragment slot="head">
       <PreloadImage src={portrait} widths={PORTRAIT_WIDTHS} sizes={PORTRAIT_SIZES} />

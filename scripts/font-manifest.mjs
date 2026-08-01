@@ -143,5 +143,43 @@ export const FONT_FILES = [
 export const LATIN_RANGE =
   'U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD';
 
+/**
+ * Faces the OG-image renderer needs as TTF.
+ *
+ * satori cannot read woff2 — only TTF, OTF and WOFF — so `pnpm fonts` also
+ * decompresses these into .og-fonts/ (build-only, never served). They are the
+ * same subset files the site ships, so an OG card can never contain a glyph the
+ * page itself cannot render.
+ */
+export const OG_FONTS = [
+  {
+    from: 'alegreya/alegreya-latin-wght-normal.woff2',
+    to: 'alegreya.ttf',
+    family: 'Alegreya',
+    // Alegreya is a VARIABLE font and satori's opentype fork cannot parse one —
+    // it throws "Cannot read properties of undefined". Pinning the wght axis
+    // produces a static instance it accepts. 600 matches the site's headings.
+    pinWeight: 600,
+  },
+  {
+    from: 'alegreya-sans/alegreya-sans-latin-500-normal.woff2',
+    to: 'alegreya-sans.ttf',
+    family: 'Alegreya Sans',
+    // Already static — Alegreya Sans has no variable version upstream.
+  },
+  // Not used for rendering. Kept so scripts/check-og.mjs can prove the glyph
+  // assertion fails on a face that genuinely lacks U+02BB.
+  {
+    from: 'caveat/caveat-malika-subset.woff2',
+    to: 'caveat.ttf',
+    family: 'Caveat',
+    pinWeight: 400,
+    fixtureOnly: true,
+  },
+];
+
+/** Uzbek fixture string every OG font must be able to draw. */
+export const OG_GLYPH_FIXTURE = 'oʻqish, gʻamxoʻrlik, sanʼat';
+
 /** Codepoints every shipped non-signature face must contain. */
 export const REQUIRED_CODEPOINTS = [0x02bb, 0x02bc];

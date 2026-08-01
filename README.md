@@ -702,6 +702,128 @@ deploy** — `scripts/deploy.sh` fails the smoke test if it returns anything but
   hostname that is not its canonical one. Remove that when it moves to
   `malika-bobonazarova.uz`.
 
+## SEO and sharing
+
+The technical foundation — sitemap, robots, canonical origin, Person /
+BlogPosting / MedicalWebPage schema, RSS, `lang="uz"`, SEO 100, sub-second LCP —
+predates this section. What follows is what was added on top, ordered by how much
+it actually matters for a new `.uz` domain with no history: **the share preview
+is worth more right now than anything on the ranking side**, because the first
+readers arrive from Telegram, not Google.
+
+### Per-post Open Graph cards
+
+`/og/<slug>.png`, rendered at build time by satori + resvg. No runtime service.
+
+- Design uses the existing tokens only — `--paper` ground, `--blush` rule,
+  `--plum` accent, Alegreya title, the wordmark's lens dot.
+- **A cover image wins when a post has one**; the generated card is the fallback
+  for posts without.
+- Long titles wrap: the size steps down with length, and `check-og.mjs` measures
+  a real 87-character Uzbek title to prove it lands on two lines and stays inside
+  the canvas.
+- The endpoint **cannot fail a build**. Any error serves `og-default.png` and
+  logs a warning.
+
+Two things future-you will trip over:
+
+> **satori cannot read woff2, and it cannot read variable fonts.** `pnpm fonts`
+> therefore also decompresses the shipped subsets into `.og-fonts/*.ttf` and pins
+> Alegreya's `wght` axis to a static instance — an unpinned variable font makes
+> satori throw `Cannot read properties of undefined`. Those TTFs come from the
+> very same subset files the browser gets, so a card can never contain a glyph
+> the page itself cannot render.
+
+> **`.og-fonts/` is resolved from `process.cwd()`, not `import.meta.url`.** Vite
+> bundles the renderer into the SSR build, so a module-relative path resolves to
+> `dist/.og-fonts` and every card silently falls back to the default image — a
+> failure that looks like success.
+
+`check-og.mjs` re-proves the Uzbek glyph work in this second text stack: satori
+drops a glyph it cannot find without complaining, so a card can lose every `Oʻ`
+and still "render". It asserts the render fonts cover
+`oʻqish, gʻamxoʻrlik, sanʼat`, and that the assertion **fails** on Caveat — a
+real font that genuinely lacks U+02BB.
+
+**Forcing a preview refresh.** Telegram, WhatsApp and Facebook cache previews
+hard. After changing a title or card:
+
+| Where | How |
+|---|---|
+| Telegram | message [@WebpageBot](https://t.me/WebpageBot) with the URL |
+| Facebook / WhatsApp | [Sharing Debugger](https://developers.facebook.com/tools/debug/) → *Scrape Again* |
+| X / Twitter | [Card Validator](https://cards-dev.twitter.com/validator) |
+| Anywhere else | append `?v=2` to the shared URL — a different URL is a different cache entry |
+
+### Uzbek query variants
+
+People type without diacritics (`koz oldida chivin`, not `koʻz`) and a sizeable
+share search in Russian (`мушки перед глазами`). A title of `Koʻz oldidagi
+chivinlar` misses much of both.
+
+`altQueries` — *Boshqacha qidiriladigan soʻzlar* in the admin — is an optional
+array that feeds `meta[name="keywords"]` and, when a search page exists, its
+index. **It never reaches visible body text and never a hidden div**: that is
+cloaking, and on a YMYL health page it does real damage. A fixture proves it,
+using a nonsense token that could only appear in the body if we put it there.
+
+Slugs stay ASCII and diacritic-free, which they already were.
+
+### IndexNow
+
+Pings Bing and Yandex with every changed URL on each deploy, from
+`astro:build:done`. Google ignores IndexNow — it is reached through Search
+Console and the sitemap.
+
+- Set `INDEXNOW_KEY` (8–128 chars, letters/digits/dashes). The key file is
+  emitted at `/<key>.txt` automatically.
+- **Failure is always a warning**, never a build error.
+- **A noindexed deploy is never submitted.** Asking Bing to index a staging copy
+  under someone else's hostname is worse than not submitting at all — so the
+  current `tengdosh.uzjoku.uz/malika` deploy skips it by design.
+
+### Verification tokens
+
+`googleSiteVerification`, `yandexVerification` and `bingVerification` live in
+`sozlamalar`, so they can be pasted in from the admin with no code change. Each
+renders a meta tag **only when set**.
+
+> DNS TXT verification is preferable and needs none of these. They are the
+> fallback for when DNS is not available.
+
+### Structured data
+
+| Schema | Where |
+|---|---|
+| `Person` | `/` and `/men-haqimda` |
+| `WebSite` (`inLanguage: uz`) | `/` |
+| `BlogPosting` | every post, `author` referencing the `Person` `@id` |
+| `BreadcrumbList` | every post — Bosh sahifa → Yozuvlar/Qaydlar → title |
+| `MedicalWebPage` | koz-sogligi posts only, `lastReviewed` from `updated` ?? `date` |
+
+Plus `article:published_time` / `article:modified_time`, `og:image:width/height`,
+and a self-referencing `hreflang` (`uz` + `x-default`) — harmless today, correct
+the day `/ru` lands.
+
+## DNS — required before any of this can be verified
+
+**The canonical origin does not currently point at the deployment.**
+
+| Record | Current | Required |
+|---|---|---|
+| `malika-bobonazarova.uz` A | — (not delegated here) | the host serving the site |
+| `tengdosh.uzjoku.uz` A | `195.158.26.100` | `195.158.26.102` (this host) |
+
+Until that is fixed at the registrar:
+
+- Search Console and Yandex Webmaster **cannot verify** the site
+- IndexNow submissions would be rejected — the key file is unreachable
+- share previews cannot be tested, because no crawler can fetch the page
+
+Everything above is built and passing locally; none of it can be confirmed
+against the live domain until DNS resolves to the right host. The site is
+`noindex` in the meantime, deliberately.
+
 ## Known gaps
 
 Reported rather than worked around:

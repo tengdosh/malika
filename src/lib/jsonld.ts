@@ -67,3 +67,43 @@ export function medicalWebPageJsonLd(entry: Entry, url: string): Record<string, 
     })),
   };
 }
+
+/**
+ * Breadcrumbs on post pages. Health posts and ordinary posts share the same
+ * trail because they share the same URL namespace — the sogliq split is an
+ * authoring concern and must not leak into structured data either.
+ */
+export function breadcrumbJsonLd(
+  entry: Entry,
+  url: string,
+  origin: string,
+): Record<string, unknown> {
+  const section =
+    entry.collection === 'notes'
+      ? { name: 'Qaydlar', path: '/qaydlar' }
+      : { name: 'Yozuvlar', path: '/yozuvlar' };
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Bosh sahifa', item: origin },
+      { '@type': 'ListItem', position: 2, name: section.name, item: `${origin}${section.path}` },
+      { '@type': 'ListItem', position: 3, name: entry.data.title, item: url },
+    ],
+  };
+}
+
+/** WebSite on the homepage. No SearchAction — there is no search page to point at. */
+export function webSiteJsonLd(origin: string): Record<string, unknown> {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    '@id': `${origin}/#website`,
+    url: origin,
+    name: SITE.name,
+    description: SITE.description,
+    inLanguage: 'uz',
+    publisher: { '@id': PERSON_ID },
+  };
+}

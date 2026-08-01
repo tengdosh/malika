@@ -29,6 +29,7 @@ uchraydigan hammasi shu yerda:
 | **Upload** / **Choose file** | Rasm tanlash |
 | **Remove** | Rasmni olib tashlash |
 | **Add item** | Roʻyxatga yana bitta qoʻshish (masalan, yana bir manba) |
+| **Item** | Roʻyxatdagi bitta element |
 | **Required** yoki qizil yulduzcha `*` | Bu maydonni toʻldirmasdan saqlab boʻlmaydi |
 
 Qolgan hamma yozuv — maydon nomlari va izohlar — oʻzbekcha.
@@ -141,6 +142,24 @@ Manzil boʻyicha farq yoʻq: sogʻliq yozuvi ham oddiy yozuv kabi
 
 ---
 
+## 5b. Odamlar qidiruvda qanday yozadi
+
+Yozuv formasining pastida **"Boshqacha qidiriladigan soʻzlar"** degan maydon bor.
+
+Odamlar qidiruvda koʻpincha `ʻ` belgisini yozmaydi — `koz oldida chivin` deb
+qidiradi, `koʻz` emas. Bir qismi esa ruscha qidiradi: `мушки перед глазами`.
+
+Shunday variantlarni shu maydonga qoʻshsangiz, qidiruv tizimlari yozuvingizni
+topishi osonroq boʻladi. Ular **yozuv matnida koʻrinmaydi** — faqat sahifaning
+koʻrinmas qismida turadi.
+
+Bitta oddiy maslahat: yozuvning birinchi xatboshisida odamlar kundalik hayotda
+ishlatadigan soʻzni tabiiy ravishda yozib qoʻysangiz — masalan "koʻz oldidagi
+chivinlar" deb — bu ham topilishga yordam beradi. Zoʻrma-zoʻraki soʻz tiqishtirish
+kerak emas, aksincha zarar qiladi.
+
+---
+
 ## 6. "Hozir" va "Hozir oʻqiyapman"
 
 Bular tez-tez oʻzgaradigan kichik boʻlimlar. Chapdagi **Tez oʻzgaradigan**
@@ -169,6 +188,8 @@ alohida maydonlar: yozsangiz sahifada koʻrinadi, boʻsh qoldirsangiz koʻrinmay
 - **Instagram havolasi**, **Elektron pochta** — xuddi shunday, shart emas.
 - **Oʻzingiz haqingizda bir qator** — saytning pastida va har bir yozuv ostida
   koʻrinadigan jumla.
+- **Google / Yandex / Bing tasdiqlash kodi** — odatda kerak emas. Bu kodlarni
+  faqat men soʻrasam kiriting; domen orqali tasdiqlash afzalroq.
 
 ---
 
@@ -232,7 +253,21 @@ Agar 10 daqiqadan keyin ham oʻzgarish koʻrinmasa — menga yozing.
 
 ---
 
-## 11. Matn haqida ikkita kichik maslahat
+## 11. Havolani Telegramga tashlaganda
+
+Yozuv havolasini Telegram yoki Instagramga tashlasangiz, chiroyli kartochka
+koʻrinadi: sarlavha, mavzu va sizning ismingiz. U avtomatik yasaladi — hech
+narsa qilish shart emas.
+
+Agar yozuvda muqova rasmi boʻlsa, kartochkada oʻsha rasm koʻrinadi.
+
+**Diqqat:** Telegram kartochkani eslab qoladi. Sarlavhani oʻzgartirsangiz, eski
+kartochka bir muddat koʻrinishda davom etishi mumkin. Bu normal — menga ayting,
+tozalab beraman.
+
+---
+
+## 12. Matn haqida ikkita kichik maslahat
 
 Oʻq belgisi (→) va emoji boshqa shriftda koʻrinadi — matnda soʻz bilan yozgan
 maʼqul.
@@ -241,7 +276,7 @@ Qolgan hamma narsa — tire, uch nuqta, qoʻshtirnoq — normal koʻrinadi.
 
 ---
 
-## 12. Nimadir notoʻgʻri boʻlsa
+## 13. Nimadir notoʻgʻri boʻlsa
 
 Avval bilib qoʻying: **sizning yozganingiz saytni buzmaydi.** Statistika ishlamay
 qolsa, yozuvlar baribir koʻrinadi, faqat hisoblagichlar yoʻqoladi.

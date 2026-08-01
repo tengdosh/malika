@@ -14,3 +14,4 @@ dist/
 
 # Stale output from the Vercel adapter (superseded by @astrojs/node)
 .vercel/
+.og-fonts/

@@ -6,6 +6,8 @@ import react from '@astrojs/react';
 import keystatic from '@keystatic/astro';
 import node from '@astrojs/node';
 
+import { fileURLToPath } from 'node:url';
+
 import { SITE } from './src/lib/site.js';
 
 /**
@@ -19,10 +21,55 @@ const ORIGIN = process.env.SITE_ORIGIN || SITE.origin;
 const BASE = process.env.SITE_BASE || '/';
 
 /**
- * Reports font-glyph coverage at the end of every build, including on Vercel and
- * Cloudflare. It never fails the build: a character Malika typed must not stop a
- * deploy, and a warning nobody sees in CI is a warning nobody sees at all.
- * `pnpm check` runs the same analysis and does fail on UI-authored gaps.
+ * IndexNow ping on every deploy. Warns on failure, never fails the build, and
+ * refuses to submit a noindexed preview.
+ *
+ * @returns {import('astro').AstroIntegration}
+ */
+const indexNowSubmit = () => ({
+  name: 'indexnow-submit',
+  hooks: {
+    'astro:build:done': async ({ dir, logger }) => {
+      const {
+        indexNowConfig,
+        writeKeyFile,
+        collectUrls,
+        submitUrls,
+      } = await import('./scripts/lib/indexnow.mjs');
+
+      const config = indexNowConfig({
+        origin: ORIGIN,
+        noindex: process.env.PUBLIC_NOINDEX === '1',
+      });
+
+      if (!config.ok) {
+        logger.info(`IndexNow skipped: ${config.reason}`);
+        return;
+      }
+
+      const distDir = fileURLToPath(dir).replace(/\/$/, '');
+      try {
+        await writeKeyFile(distDir, config.key);
+        const urls = collectUrls(distDir, config.origin);
+        const result = await submitUrls({ ...config, urls });
+        if (result.error) {
+          logger.warn(`IndexNow submission failed (not fatal): ${result.error}`);
+        } else {
+          logger.info(`IndexNow: submitted ${result.submitted} URLs, HTTP ${result.status}`);
+        }
+      } catch (error) {
+        // Never fatal. A search engine is not worth a failed deploy.
+        logger.warn(`IndexNow step failed (not fatal): ${/** @type {Error} */ (error).message}`);
+      }
+    },
+  },
+});
+
+/**
+ * Reports font-glyph coverage at the end of every build, including on the host.
+ * It never fails the build: a character Malika typed must not stop a deploy, and
+ * a warning nobody sees in CI is a warning nobody sees at all. `pnpm check` runs
+ * the same analysis and does fail on UI-authored gaps.
  *
  * @returns {import('astro').AstroIntegration}
  */
@@ -73,6 +120,7 @@ export default defineConfig({
     react(),
     keystatic(),
     glyphCoverageReport(),
+    indexNowSubmit(),
   ],
   markdown: {
     shikiConfig: { theme: 'github-light', wrap: true },
