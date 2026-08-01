@@ -1,5 +1,7 @@
 import { config, collection, singleton, fields } from '@keystatic/core';
 
+import { CONTENT_PATHS, assetPath } from './src/lib/content-paths.js';
+
 /**
  * Keystatic CMS.
  *
@@ -28,16 +30,6 @@ const PILLAR_OPTIONS = [
   { label: 'Esse', value: 'esse' },
 ];
 
-/**
- * publicPath is relative to the content file, so astro:assets still resolves and
- * optimises the image. Content lives at src/content/<collection>/<slug>.md, which
- * is two levels below src/.
- */
-const postImage = {
-  directory: 'src/assets/posts',
-  publicPath: '../../assets/posts/',
-};
-
 const sourceFields = fields.object(
   {
     title: fields.text({
@@ -61,8 +53,15 @@ const sourceFields = fields.object(
  * `health: true` drops the pillar picker (implied by the collection) and makes
  * `sources` genuinely required — enforced by the admin before save, which is the
  * whole reason health posts are a separate collection.
+ *
+ * `contentPath` is not decoration. The three collections do NOT sit at the same
+ * depth — sogliq lives one directory deeper — and an uploaded image's path is
+ * written relative to the entry file. Sharing one publicPath across them wrote a
+ * path that resolved outside src/assets/ for health posts, so the build failed
+ * the first time Malika added a cover to one. It is derived per collection now,
+ * and scripts/check-schema-sync.mjs fails if anyone hardcodes it again.
  */
-const entryFields = (evergreenDefault: boolean, health = false) => ({
+const entryFields = (contentPath: string, evergreenDefault: boolean, health = false) => ({
   title: fields.slug({
     name: {
       label: 'Sarlavha',
@@ -125,7 +124,7 @@ const entryFields = (evergreenDefault: boolean, health = false) => ({
   cover: fields.image({
     label: 'Muqova rasmi',
     description: 'Shart emas. Rasmsiz yozuv ham chiroyli koʻrinadi.',
-    ...postImage,
+    ...assetPath(contentPath, 'posts'),
   }),
 
   coverAlt: fields.text({
@@ -205,39 +204,39 @@ export default config({
   collections: {
     posts: collection({
       label: 'Yozuvlar',
-      path: 'src/content/posts/*',
+      path: CONTENT_PATHS.posts,
       slugField: 'title',
       format: { contentField: 'content' },
       entryLayout: 'content',
       columns: ['title', 'date'],
-      schema: entryFields(false),
+      schema: entryFields(CONTENT_PATHS.posts, false),
     }),
 
     sogliq: collection({
       label: 'Koʻz sogʻligʻi yozuvi',
-      path: 'src/content/posts/sogliq/*',
+      path: CONTENT_PATHS.sogliq,
       slugField: 'title',
       format: { contentField: 'content' },
       entryLayout: 'content',
       columns: ['title', 'date'],
-      schema: entryFields(false, true),
+      schema: entryFields(CONTENT_PATHS.sogliq, false, true),
     }),
 
     notes: collection({
       label: 'Qaydlar',
-      path: 'src/content/notes/*',
+      path: CONTENT_PATHS.notes,
       slugField: 'title',
       format: { contentField: 'content' },
       entryLayout: 'content',
       columns: ['title', 'updated'],
-      schema: entryFields(true),
+      schema: entryFields(CONTENT_PATHS.notes, true),
     }),
   },
 
   singletons: {
     hozir: singleton({
       label: 'Hozir',
-      path: 'src/content/site/hozir',
+      path: CONTENT_PATHS.hozir,
       format: { contentField: 'content' },
       schema: {
         title: fields.text({ label: 'Sarlavha', defaultValue: 'Hozir' }),
@@ -255,7 +254,7 @@ export default config({
 
     oqiyapman: singleton({
       label: 'Hozir oʻqiyapman',
-      path: 'src/content/site/oqiyapman',
+      path: CONTENT_PATHS.oqiyapman,
       format: { data: 'yaml' },
       schema: {
         title: fields.text({ label: 'Sahifa nomi', defaultValue: 'Hozir oʻqiyapman' }),
@@ -277,8 +276,7 @@ export default config({
             }),
             cover: fields.image({
               label: 'Kitob muqovasi',
-              directory: 'src/assets/books',
-              publicPath: '../../../assets/books/',
+              ...assetPath(CONTENT_PATHS.oqiyapman, 'books'),
             }),
             coverAlt: fields.text({ label: 'Muqova tavsifi' }),
           },
@@ -289,7 +287,7 @@ export default config({
 
     men_haqimda: singleton({
       label: 'Men haqimda',
-      path: 'src/content/site/men_haqimda',
+      path: CONTENT_PATHS.men_haqimda,
       format: { contentField: 'content' },
       schema: {
         title: fields.text({ label: 'Sarlavha', defaultValue: 'Men haqimda' }),
@@ -309,8 +307,7 @@ export default config({
         }),
         portrait: fields.image({
           label: 'Rasmingiz',
-          directory: 'src/assets/about',
-          publicPath: '../../../assets/about/',
+          ...assetPath(CONTENT_PATHS.men_haqimda, 'about'),
         }),
         portraitAlt: fields.text({
           label: 'Rasm tavsifi',
@@ -322,7 +319,7 @@ export default config({
 
     maxfiylik: singleton({
       label: 'Maxfiylik',
-      path: 'src/content/site/maxfiylik',
+      path: CONTENT_PATHS.maxfiylik,
       format: { contentField: 'content' },
       schema: {
         title: fields.text({ label: 'Sarlavha', defaultValue: 'Maxfiylik' }),
@@ -333,7 +330,7 @@ export default config({
 
     sozlamalar: singleton({
       label: 'Sozlamalar',
-      path: 'src/content/site/sozlamalar',
+      path: CONTENT_PATHS.sozlamalar,
       format: { data: 'yaml' },
       schema: {
         title: fields.text({ label: 'Nomi', defaultValue: 'Sozlamalar' }),

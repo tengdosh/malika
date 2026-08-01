@@ -1,20 +1,22 @@
 #!/usr/bin/env node
 /**
- * Two schemas now describe the same content: the Zod schema in
- * src/content.config.ts (what the build accepts) and the Keystatic config (what
- * the admin writes). If they drift, Malika saves a post that fails the build —
- * she never sees the error and the site silently stops updating.
+ * Three clients now describe the same content: the Zod schema in
+ * src/content.config.ts (what the build accepts), the Keystatic config (what the
+ * admin writes) and bot/ (what Telegram writes). If they drift, Malika saves a
+ * post that fails the build — she never sees the error and the site silently
+ * stops updating.
  *
  * This is an explicit test, not a generator. EXPECTED below is the canonical
- * list; both files are compared against it. Adding a field to one file only
+ * list; every source is compared against it. Adding a field to one file only
  * therefore fails, and so does adding it to both but forgetting this list —
  * which is the point: a schema change should be a deliberate, reviewed edit.
  *
- * Both files are parsed statically. Neither can simply be imported: the Zod one
- * needs Astro's `astro:content` virtual module, and importing the Keystatic one
- * would drag in the whole editor bundle.
+ * The parsing lives in scripts/lib/content-fields.mjs, which the bot imports
+ * too: the bot derives its field knowledge rather than restating it, and the
+ * structural guard at the bottom fails if that ever stops being true.
  */
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
+import { botFields, keystaticFields, zodFields } from './lib/content-fields.mjs';
 
 /**
  * Canonical frontmatter field names. `content` (the body) is not frontmatter.
@@ -79,121 +81,12 @@ const EXPECTED = {
 /** Body fields, which exist in Keystatic but never as frontmatter. */
 const BODY_FIELDS = new Set(['content']);
 
-/**
- * Returns the source text of the balanced {...} block that starts at the first
- * `{` at or after `from`.
- */
-function block(source, from) {
-  const start = source.indexOf('{', from);
-  if (start === -1) return '';
-  let depth = 0;
-  for (let i = start; i < source.length; i += 1) {
-    const char = source[i];
-    if (char === '{') depth += 1;
-    else if (char === '}') {
-      depth -= 1;
-      if (depth === 0) return source.slice(start + 1, i);
-    }
-  }
-  return '';
-}
-
-/**
- * Top-level field names of a block, ignoring nested objects and comments.
- * Handles both `key: value` and ES shorthand (`pillar,`), which the Zod schema
- * uses wherever the field name matches an existing const.
- */
-function keysOf(blockSource) {
-  const stripped = blockSource
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/^[ \t]*\/\/.*$/gm, '');
-
-  const keys = [];
-  let depth = 0;
-  let line = '';
-  for (const char of stripped) {
-    if (char === '\n') {
-      const match =
-        /^\s*([A-Za-z_$][\w$]*)\s*:/.exec(line) ?? /^\s*([A-Za-z_$][\w$]*)\s*,\s*$/.exec(line);
-      if (depth === 0 && match) keys.push(match[1]);
-      line = '';
-      continue;
-    }
-    if (depth === 0) {
-      const match = /^\s*([A-Za-z_$][\w$]*)\s*:/.exec(line + char);
-      if (match && (char === '(' || char === '{' || char === '[')) {
-        keys.push(match[1]);
-        line = '';
-        depth += 1;
-        continue;
-      }
-    }
-    if ('{[('.includes(char)) depth += 1;
-    else if ('}])'.includes(char)) depth -= 1;
-    line += char;
-  }
-  const tail =
-    /^\s*([A-Za-z_$][\w$]*)\s*:/.exec(line) ?? /^\s*([A-Za-z_$][\w$]*)\s*,?\s*$/.exec(line);
-  if (depth === 0 && tail) keys.push(tail[1]);
-
-  /*
-   * Conditional spreads contribute their keys too. The health collection drops
-   * `pillar` with `...(health ? {} : { pillar: ... })`, which the walker above
-   * skips because the key sits inside the ternary's object literal — and a field
-   * this check cannot see is a field it cannot keep in sync.
-   *
-   * If the shape of a spread ever changes, this stops matching and the check
-   * reports a MISSING field rather than silently passing. That is the safe
-   * direction to fail in.
-   */
-  for (const spread of stripped.matchAll(/\.\.\.\([\s\S]*?\)\s*,/g)) {
-    // Only real field definitions. A spread also carries option objects
-    // (`validation: { length: { min: 1 } }`), whose keys are not fields.
-    for (const field of spread[0].matchAll(/^\s*([A-Za-z_$][\w$]*)\s*:\s*(?:fields|z)\./gm)) {
-      keys.push(field[1]);
-    }
-  }
-
-  return [...new Set(keys)];
-}
-
-const keystatic = readFileSync('keystatic.config.ts', 'utf8');
-const zod = readFileSync('src/content.config.ts', 'utf8');
+const keystaticSource = readFileSync('keystatic.config.ts', 'utf8');
 
 const parsed = {
-  keystatic: {
-    // entryFields() is shared; `health: true` only drops `pillar`, so the parsed
-    // key list is the same and the health expectation is checked against it minus
-    // that one field. The spread is what makes pillar conditional, so assert it.
-    entry: keysOf(block(keystatic, keystatic.indexOf('const entryFields ='))),
-    health: keysOf(block(keystatic, keystatic.indexOf('const entryFields =')))
-      .filter((field) => field !== 'pillar'),
-    source: keysOf(block(keystatic, keystatic.indexOf('const sourceFields = fields.object('))),
-    singletons: [
-      ...new Set(
-        ['hozir:', 'oqiyapman:', 'men_haqimda:', 'maxfiylik:', 'sozlamalar:'].flatMap((name) => {
-          const at = keystatic.indexOf(name, keystatic.indexOf('singletons:'));
-          return keysOf(block(keystatic, keystatic.indexOf('schema:', at)));
-        }),
-      ),
-    ],
-    book: keysOf(block(keystatic, keystatic.indexOf('book: fields.object('))),
-  },
-  zod: {
-    entry: [
-      ...keysOf(block(zod, zod.indexOf('const entryFields ='))),
-      // evergreen is added per-collection, outside the shared field set
-      ...(zod.includes('evergreen: z.boolean()') ? ['evergreen'] : []),
-    ],
-    // The sogliq collection spreads entryFields and overrides pillar/sources.
-    health: [
-      ...keysOf(block(zod, zod.indexOf('const entryFields ='))),
-      ...(zod.includes('evergreen: z.boolean()') ? ['evergreen'] : []),
-    ].filter((field) => field !== 'pillar'),
-    source: keysOf(block(zod, zod.indexOf('const source = z.object('))),
-    singletons: keysOf(block(zod, zod.indexOf('z.object({', zod.indexOf('const site =')))),
-    book: keysOf(block(zod, zod.indexOf('book: blankToUndefined('))),
-  },
+  keystatic: keystaticFields(),
+  zod: zodFields(),
+  bot: botFields(),
 };
 
 let failures = 0;
@@ -220,13 +113,19 @@ for (const group of ['entry', 'health', 'source', 'singletons', 'book']) {
   compare(`content.config.ts    ${group}`, EXPECTED[group], parsed.zod[group]);
 }
 
+/* The bot writes entries only — it has no singleton schema of its own, because
+   /hozir and /kitob update named fields of files that already exist. */
+for (const group of ['entry', 'health', 'source']) {
+  compare(`bot/                 ${group}`, EXPECTED[group], parsed.bot[group]);
+}
+
 /*
  * Structural guarantees, not field lists:
  *   - the admin must never offer koz-sogligi as a pillar, or an unsourced health
  *     post becomes savable and the Zod backstop becomes reachable again
  *   - the health collection must actually require a source
  */
-if (/value:\s*'koz-sogligi'/.test(keystatic)) {
+if (/value:\s*'koz-sogligi'/.test(keystaticSource)) {
   console.error("  FAIL keystatic.config.ts still offers 'koz-sogligi' as a pillar option");
   console.error('       Health posts belong to the sogliq collection, where sources are required.');
   failures += 1;
@@ -234,20 +133,67 @@ if (/value:\s*'koz-sogligi'/.test(keystatic)) {
   console.log("  ok   keystatic.config.ts  no selectable 'koz-sogligi' pillar");
 }
 
-if (/validation:\s*\{\s*length:\s*\{\s*min:\s*1/.test(keystatic)) {
+if (/validation:\s*\{\s*length:\s*\{\s*min:\s*1/.test(keystaticSource)) {
   console.log('  ok   keystatic.config.ts  health sources require at least one entry');
 } else {
   console.error('  FAIL keystatic.config.ts  health sources are no longer required (length.min 1)');
   failures += 1;
 }
 
+/*
+ * Image paths must be derived from the collection path, never written by hand.
+ *
+ * Keystatic resolves an uploaded image relative to the entry file, and the entry
+ * collections do not share a depth: sogliq lives at src/content/posts/sogliq/*,
+ * one level below posts and notes. A single shared `publicPath` literal is
+ * therefore wrong for one of them, and wrong in the worst way — the config looks
+ * fine, every existing post builds, and the failure only appears the first time
+ * a cover is uploaded to a health post. src/lib/content-paths.js computes it.
+ */
+const hardcoded = [...keystaticSource.matchAll(/^.*\bpublicPath\s*:.*$/gm)].map((m) => m[0].trim());
+if (hardcoded.length === 0) {
+  console.log('  ok   keystatic.config.ts  image paths derived from the collection path');
+} else {
+  console.error('  FAIL keystatic.config.ts hardcodes publicPath — derive it instead');
+  console.error('       use assetPath(CONTENT_PATHS.<name>, <assetDir>) from src/lib/content-paths.js');
+  for (const line of hardcoded) console.error(`       ${line}`);
+  failures += 1;
+}
+
+/*
+ * The bot must derive its fields and its cover depth, never restate them. This
+ * is the guard that stops "three schemas" from becoming true: hand-typed lists
+ * can agree today and drift tomorrow, and the drift is invisible until a save
+ * fails the build.
+ */
+const BOT_ENTRY = 'bot/src/entry.mjs';
+if (existsSync(BOT_ENTRY)) {
+  const bot = readFileSync(BOT_ENTRY, 'utf8');
+  const derivesFields = /scripts\/lib\/content-fields\.mjs/.test(bot);
+  const derivesPaths = /src\/lib\/content-paths\.js/.test(bot);
+
+  if (derivesFields && derivesPaths) {
+    console.log('  ok   bot/                 fields and cover depth derived, not restated');
+  } else {
+    console.error('  FAIL bot/src/entry.mjs no longer derives the schema');
+    if (!derivesFields) console.error('       expected an import of scripts/lib/content-fields.mjs');
+    if (!derivesPaths) console.error('       expected an import of src/lib/content-paths.js');
+    failures += 1;
+  }
+} else {
+  // The bot is optional; the rule is that it derives the schema *if it exists*.
+  // Failing on its absence would make this check describe a wish rather than the
+  // repository.
+  console.log('  --   bot/                 not present, nothing to check');
+}
+
 if (failures > 0) {
   console.error(
     `\ncheck-schema-sync: ${failures} mismatch(es).` +
-      '\n  A field must exist in keystatic.config.ts, src/content.config.ts AND the' +
-      '\n  EXPECTED list in this script. Otherwise the admin can save content the' +
+      '\n  A field must exist in keystatic.config.ts, src/content.config.ts, bot/ AND' +
+      '\n  the EXPECTED list in this script. Otherwise a client can save content the' +
       '\n  build rejects.',
   );
   process.exit(1);
 }
-console.log('\ncheck-schema-sync: both schemas agree.');
+console.log('\ncheck-schema-sync: all three schemas agree.');
