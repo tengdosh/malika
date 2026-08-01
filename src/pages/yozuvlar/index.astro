@@ -3,6 +3,7 @@ import Base from '../../layouts/Base.astro';
 import EntryList from '../../components/EntryList.astro';
 import { getPosts } from '../../lib/entries';
 import { PILLARS, PILLAR_LABEL } from '../../lib/pillars';
+import { withBase } from '../../lib/site.js';
 
 const posts = await getPosts();
 
@@ -10,7 +11,7 @@ const posts = await getPosts();
 // filtered view is crawlable.
 const filters = PILLARS.filter((pillar) => posts.some((post) => post.data.pillar === pillar));
 const href = (pillar: string) =>
-  pillar === 'koz-sogligi' ? '/koz-sogligi' : `/yozuvlar/mavzu/${pillar}`;
+  withBase(pillar === 'koz-sogligi' ? '/koz-sogligi' : `/yozuvlar/mavzu/${pillar}`);
 ---
 
 <Base

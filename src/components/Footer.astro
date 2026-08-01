@@ -1,5 +1,5 @@
 ---
-import { SITE } from '../lib/site.js';
+import { SITE, withBase } from '../lib/site.js';
 import { getSettings } from '../lib/settings';
 
 const settings = await getSettings();
@@ -33,7 +33,7 @@ const LINKS = [
 
     <nav aria-label="Saytning boshqa sahifalari">
       <ul class="footer__links">
-        {LINKS.map((link) => <li><a href={link.href}>{link.label}</a></li>)}
+        {LINKS.map((link) => <li><a href={withBase(link.href)}>{link.label}</a></li>)}
         {/* Each hidden unless set in the admin. Empty is a valid state. */}
         {settings.telegram && <li><a href={settings.telegram} rel="me noopener">Telegram</a></li>}
         {settings.instagram && <li><a href={settings.instagram} rel="me noopener">Instagram</a></li>}

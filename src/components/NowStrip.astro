@@ -1,4 +1,6 @@
 ---
+import { withBase } from '../lib/site.js';
+
 interface Props {
   text: string;
 }
@@ -10,6 +12,6 @@ const { text } = Astro.props;
   <div class="now-strip">
     <p class="now-strip__label" id="hozir-strip">Hozir</p>
     <p>{text}</p>
-    <a class="now-strip__link" href="/hozir">Toʻliq oʻqish</a>
+    <a class="now-strip__link" href={withBase("/hozir")}>Toʻliq oʻqish</a>
   </div>
 </section>

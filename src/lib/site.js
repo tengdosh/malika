@@ -1,5 +1,30 @@
 // Plain JS so astro.config.mjs and the check scripts can import it without a TS step.
 
+/**
+ * Base path the site is served under: '/' normally, '/malika/' on a subpath
+ * deployment. Astro rewrites its OWN asset URLs for `base`, but not paths
+ * written by hand in href/src — every one of those goes through withBase().
+ *
+ * Guarded: astro.config.mjs imports this file, and import.meta.env is not
+ * populated in that context.
+ */
+const BASE =
+  (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.BASE_URL) || '/';
+
+/** withBase('/yozuvlar') -> '/malika/yozuvlar', or '/yozuvlar' with no base. */
+export function withBase(path = '/') {
+  const prefix = BASE.endsWith('/') ? BASE.slice(0, -1) : BASE;
+  const suffix = String(path).startsWith('/') ? path : `/${path}`;
+  return `${prefix}${suffix}` || '/';
+}
+
+/** Strips the base off a request path so route comparisons still work. */
+export function stripBase(pathname) {
+  const prefix = BASE.endsWith('/') ? BASE.slice(0, -1) : BASE;
+  if (prefix && pathname.startsWith(prefix)) return pathname.slice(prefix.length) || '/';
+  return pathname;
+}
+
 /** Canonical origin. Every other hostname 301s to this one at the edge. */
 export const SITE = {
   origin: 'https://malika-bobonazarova.uz',

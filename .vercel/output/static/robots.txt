@@ -1,7 +1,0 @@
-User-agent: *
-Allow: /
-Disallow: /admin/
-Disallow: /keystatic
-Disallow: /api/keystatic/
-
-Sitemap: https://malika-bobonazarova.uz/sitemap-index.xml

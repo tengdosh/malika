@@ -4,6 +4,7 @@ import Base from '../../../layouts/Base.astro';
 import EntryList from '../../../components/EntryList.astro';
 import { getPosts } from '../../../lib/entries';
 import { PILLARS, PILLAR_LABEL, PILLAR_BLURB, type Pillar } from '../../../lib/pillars';
+import { withBase } from '../../../lib/site.js';
 
 /**
  * koz-sogligi is deliberately absent: it has its own /koz-sogligi index with a
@@ -34,11 +35,11 @@ const others = PILLARS.filter((p) => p !== pillar && p !== 'koz-sogligi');
 
   <section class="shell section" style="margin-top:0">
     <nav class="filters" aria-label="Mavzu boʻyicha saralash">
-      <a class="pillar-chip" href="/yozuvlar">Barchasi</a>
+      <a class="pillar-chip" href={withBase("/yozuvlar")}>Barchasi</a>
       {others.map((other) => (
-        <a class="pillar-chip" href={`/yozuvlar/mavzu/${other}`}>{PILLAR_LABEL[other]}</a>
+        <a class="pillar-chip" href={withBase(`/yozuvlar/mavzu/${other}`)}>{PILLAR_LABEL[other]}</a>
       ))}
-      <a class="pillar-chip" href="/koz-sogligi">{PILLAR_LABEL['koz-sogligi']}</a>
+      <a class="pillar-chip" href={withBase("/koz-sogligi")}>{PILLAR_LABEL['koz-sogligi']}</a>
     </nav>
 
     <EntryList entries={entries} emptyText="Bu mavzuda hali yozuv yoʻq." />

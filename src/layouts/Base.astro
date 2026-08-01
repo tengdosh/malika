@@ -1,7 +1,7 @@
 ---
 import Masthead from '../components/Masthead.astro';
 import Footer from '../components/Footer.astro';
-import { SITE } from '../lib/site.js';
+import { SITE, withBase } from '../lib/site.js';
 import { FONT_FILES } from '../../scripts/font-manifest.mjs';
 import '../styles/global.css';
 
@@ -37,8 +37,17 @@ const analyticsDomain = import.meta.env.PUBLIC_ANALYTICS_DOMAIN;
 const analyticsSrc =
   import.meta.env.PUBLIC_ANALYTICS_SRC ?? 'https://plausible.io/js/script.js';
 
-const canonical = new URL(Astro.url.pathname.replace(/\/$/, '') || '/', SITE.origin);
-const ogImageUrl = new URL(ogImage, SITE.origin);
+/**
+ * Canonical + indexing.
+ *
+ * On a preview deployment (a different origin, or a subpath under someone
+ * else's domain) the whole site is noindexed: letting Google index the same
+ * content under two hostnames is worse than not being indexed yet.
+ */
+const previewDeploy = import.meta.env.PUBLIC_NOINDEX === '1';
+const origin = import.meta.env.PUBLIC_SITE_ORIGIN || SITE.origin;
+const canonical = new URL(Astro.url.pathname.replace(/\/$/, '') || '/', origin);
+const ogImageUrl = new URL(withBase(ogImage), origin);
 const fullTitle = title === SITE.name ? title : `${title} — ${SITE.name}`;
 ---
 
@@ -50,7 +59,7 @@ const fullTitle = title === SITE.name ? title : `${title} — ${SITE.name}`;
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical.href} />
-    {noindex && <meta name="robots" content="noindex" />}
+    {(noindex || previewDeploy) && <meta name="robots" content="noindex, nofollow" />}
 
     <meta property="og:type" content={ogType} />
     <meta property="og:title" content={fullTitle} />
@@ -61,8 +70,8 @@ const fullTitle = title === SITE.name ? title : `${title} — ${SITE.name}`;
     <meta property="og:site_name" content={SITE.name} />
     <meta name="twitter:card" content="summary_large_image" />
 
-    <link rel="alternate" type="application/rss+xml" title={SITE.name} href="/rss.xml" />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="alternate" type="application/rss+xml" title={SITE.name} href={withBase("/rss.xml")} />
+    <link rel="icon" href={withBase("/favicon.svg")} type="image/svg+xml" />
 
     {
       /* Exactly the two faces that render above the fold: the body face and the
@@ -70,7 +79,7 @@ const fullTitle = title === SITE.name ? title : `${title} — ${SITE.name}`;
          font-display:swap. Driven by scripts/font-manifest.mjs so this list cannot
          drift from what public/fonts actually contains. */
       PRELOAD_FONTS.map((font) => (
-        <link rel="preload" as="font" type="font/woff2" href={`/fonts/${font.to}`} crossorigin />
+        <link rel="preload" as="font" type="font/woff2" href={withBase(`/fonts/${font.to}`)} crossorigin />
       ))
     }
 

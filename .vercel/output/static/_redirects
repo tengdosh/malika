@@ -1,3 +1,0 @@
-# Cloudflare Pages. Canonical origin is https://malika-bobonazarova.uz —
-# every other hostname 301s to it at the edge.
-https://www.malika-bobonazarova.uz/*  https://malika-bobonazarova.uz/:splat  301

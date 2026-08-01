@@ -608,6 +608,64 @@ content file, so `astro:assets` still optimises uploads. A fixture builds a post
 in Keystatic's exact output format and asserts the result has AVIF, WebP and a
 srcset.
 
+## Live deployment: tengdosh.uzjoku.uz/malika
+
+Served from this repo by systemd + nginx on the tengdosh host, alongside the
+other apps on that box.
+
+```bash
+./scripts/deploy.sh      # build with the deploy env, restart, smoke test
+sudo journalctl -u malika -f
+```
+
+| Piece | Where |
+|---|---|
+| Service | `malika.service` — `node dist/server/entry.mjs`, 127.0.0.1:3200 |
+| Deploy env | `.env.deploy` (gitignored) — `SITE_ORIGIN`, `SITE_BASE`, `PUBLIC_NOINDEX` |
+| nginx | `/etc/nginx/sites-enabled/tengdosh_final`, in **both** the :80 and :443 blocks |
+| Admin password | `/etc/nginx/.malika_htpasswd`; plaintext in `.admin-password.txt` (gitignored) |
+
+Adapter is `@astrojs/node` (standalone), matching the house pattern used by
+nashriyot-master. `@astrojs/vercel` is no longer installed; swapping back is a
+one-line change in `astro.config.mjs`.
+
+### Three things this deployment forced
+
+**1. Subpath means `base`, and `base` means `withBase()`.** Astro rewrites its
+own asset URLs for `base` but not paths written by hand in `href`/`src`. Every
+one of those now goes through `withBase()` in `src/lib/site.js`, and route
+comparisons go through `stripBase()`. Miss one and it silently points at the
+domain root.
+
+**2. Keystatic ignores `base`.** At `/malika/keystatic` the page returns 200 but
+the app renders "Not found": its client router and its `/api/keystatic/*` calls
+assume they sit at the origin root. The CMS is therefore mounted at the **root**
+of the domain (`/keystatic`, `/api/keystatic`) and rewritten onto the app's
+`/malika` prefix by nginx. It works, but it squats a generic path on a shared
+domain. **A subdomain (`malika.uzjoku.uz`) would remove this workaround, the
+`base` config and `withBase()` entirely** — worth doing if the site stays here.
+
+**3. The edge auth did not come along.** `middleware.ts` is Vercel Edge
+Middleware and `functions/admin/_middleware.js` is Cloudflare Pages — *neither
+runs behind nginx*, so `/malika/admin/statistika` was briefly world-readable.
+Auth is now an nginx `auth_basic` block. Both files are kept for those platforms;
+whichever host is in use, **verify the admin prompts for a password after any
+deploy** — `scripts/deploy.sh` fails the smoke test if it returns anything but 401.
+
+### Not yet done here
+
+- **DNS.** `tengdosh.uzjoku.uz` resolves to `195.158.26.100`; this host is
+  `195.158.26.102`. The deploy is live and verified on this box over loopback,
+  but whether that URL reaches it depends on where DNS points.
+- **Keystatic GitHub App.** `/keystatic` loads and shows "Log in with GitHub",
+  but no App is registered yet, so login fails. Needs the four env vars in
+  `.env.example` under "CMS".
+- **Analytics.** No Umami instance yet, so counters are absent and the stats page
+  says so — by design.
+- The site is **noindexed** (`PUBLIC_NOINDEX=1`) because it is serving under a
+  hostname that is not its canonical one. Remove that when it moves to
+  `malika-bobonazarova.uz`.
+
 ## Known gaps
 
 Reported rather than worked around:

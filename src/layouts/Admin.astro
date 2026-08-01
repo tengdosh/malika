@@ -1,5 +1,5 @@
 ---
-import { ADMIN } from '../lib/site.js';
+import { ADMIN, withBase, stripBase } from '../lib/site.js';
 import '../styles/global.css';
 
 interface Props {
@@ -7,7 +7,7 @@ interface Props {
 }
 
 const { title } = Astro.props;
-const path = Astro.url.pathname.replace(/\/$/, '');
+const path = stripBase(Astro.url.pathname).replace(/\/$/, '');
 ---
 
 <!doctype html>
@@ -20,13 +20,13 @@ const path = Astro.url.pathname.replace(/\/$/, '');
     <!-- Belt and braces alongside the edge auth: never indexed, never in the
          sitemap (see astro.config.mjs), Disallowed in robots.txt. -->
     <meta name="robots" content="noindex, nofollow" />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href={withBase("/favicon.svg")} type="image/svg+xml" />
 
     <link
       rel="preload"
       as="font"
       type="font/woff2"
-      href="/fonts/alegreya-sans/alegreya-sans-latin-400-normal.woff2"
+      href={withBase("/fonts/alegreya-sans/alegreya-sans-latin-400-normal.woff2")}
       crossorigin
     />
   </head>
@@ -45,15 +45,15 @@ const path = Astro.url.pathname.replace(/\/$/, '');
             /* TODO(cms): set ADMIN.cmsPath once the CMS is installed. Rendering a
                link to a route that does not exist would be worse than omitting it. */
             ADMIN.cmsPath && (
-              <a href={ADMIN.cmsPath} aria-current={path === ADMIN.cmsPath ? 'page' : undefined}>
+              <a href={withBase(ADMIN.cmsPath)} aria-current={path === ADMIN.cmsPath ? 'page' : undefined}>
                 Yozuvlarni tahrirlash
               </a>
             )
           }
-          <a href="/admin/statistika" aria-current={path === '/admin/statistika' ? 'page' : undefined}>
+          <a href={withBase("/admin/statistika")} aria-current={path === '/admin/statistika' ? 'page' : undefined}>
             Statistika
           </a>
-          <a href="/">Saytga qaytish</a>
+          <a href={withBase("/")}>Saytga qaytish</a>
         </nav>
       </div>
     </header>

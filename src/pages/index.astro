@@ -13,6 +13,7 @@ import TelegramCta from '../components/TelegramCta.astro';
 import { getPosts, splitFeatured } from '../lib/entries';
 import { personJsonLd } from '../lib/jsonld';
 import { getSettings } from '../lib/settings';
+import { withBase } from '../lib/site.js';
 import { SITE } from '../lib/site.js';
 
 const posts = await getPosts();
@@ -84,7 +85,7 @@ const PORTRAIT_SIZES = '(min-width: 52rem) 20rem, min(100vw, 20rem)';
   <section class="shell section" aria-labelledby="songgi">
     <div class="section-head">
       <h2 id="songgi">Soʻnggi yozuvlar</h2>
-      <a class="more" href="/yozuvlar">Barcha yozuvlar</a>
+      <a class="more" href={withBase("/yozuvlar")}>Barcha yozuvlar</a>
     </div>
 
     {featured && <FeaturedEntry entry={featured} />}

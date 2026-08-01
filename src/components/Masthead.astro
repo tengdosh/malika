@@ -1,8 +1,8 @@
 ---
 import Prefs from './Prefs.astro';
-import { SITE } from '../lib/site.js';
+import { SITE, withBase, stripBase } from '../lib/site.js';
 
-const path = Astro.url.pathname.replace(/\/$/, '') || '/';
+const path = stripBase(Astro.url.pathname).replace(/\/$/, '') || '/';
 
 const NAV = [
   { href: '/yozuvlar', label: 'Yozuvlar' },
@@ -15,13 +15,13 @@ const current = (href: string) => (path === href || path.startsWith(`${href}/`) 
 
 <header class="masthead">
   <div class="shell masthead__inner">
-    <a class="wordmark" href="/">
+    <a class="wordmark" href={withBase("/")}>
       <span class="wordmark__dot" aria-hidden="true"></span>
       {SITE.name}
     </a>
 
     <nav class="nav" aria-label="Asosiy menyu">
-      {NAV.map((item) => <a href={item.href} aria-current={current(item.href)}>{item.label}</a>)}
+      {NAV.map((item) => <a href={withBase(item.href)} aria-current={current(item.href)}>{item.label}</a>)}
     </nav>
 
     <Prefs />

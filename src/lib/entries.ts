@@ -1,10 +1,11 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
+import { withBase } from './site.js';
 
 /** posts and notes share a schema; most components accept either. */
 export type Entry = CollectionEntry<'posts'> | CollectionEntry<'notes'>;
 
 export const entryHref = (entry: Entry): string =>
-  entry.collection === 'notes' ? `/qaydlar/${entry.id}` : `/yozuvlar/${entry.id}`;
+  withBase(entry.collection === 'notes' ? `/qaydlar/${entry.id}` : `/yozuvlar/${entry.id}`);
 
 /** Drafts render in dev so she can preview them, and never ship. */
 const isPublished = (entry: { data: { draft: boolean } }) =>

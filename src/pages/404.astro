@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import { withBase } from '../lib/site.js';
 ---
 
 <Base title="Sahifa topilmadi" noindex>
@@ -10,7 +11,7 @@ import Base from '../layouts/Base.astro';
       boʻlishi mumkin — kechirasiz.
     </p>
     <p style="margin-top:1.5rem">
-      <a class="button" href="/">Bosh sahifaga qaytish</a>
+      <a class="button" href={withBase("/")}>Bosh sahifaga qaytish</a>
     </p>
   </div>
 </Base>

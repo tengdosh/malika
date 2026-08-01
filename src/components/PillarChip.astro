@@ -1,5 +1,6 @@
 ---
 import { PILLAR_LABEL, type Pillar } from '../lib/pillars';
+import { withBase } from '../lib/site.js';
 
 interface Props {
   pillar: Pillar;
@@ -9,7 +10,9 @@ interface Props {
 
 const { pillar, link = true } = Astro.props;
 const label = PILLAR_LABEL[pillar];
-const href = pillar === 'koz-sogligi' ? '/koz-sogligi' : `/yozuvlar/mavzu/${pillar}`;
+const href = withBase(
+  pillar === 'koz-sogligi' ? '/koz-sogligi' : `/yozuvlar/mavzu/${pillar}`,
+);
 ---
 
 {

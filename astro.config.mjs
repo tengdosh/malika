@@ -4,9 +4,19 @@ import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 import react from '@astrojs/react';
 import keystatic from '@keystatic/astro';
-import vercel from '@astrojs/vercel';
+import node from '@astrojs/node';
 
 import { SITE } from './src/lib/site.js';
+
+/**
+ * Deploy target. Defaults to the canonical domain at the root; the live
+ * deployment on tengdosh.uzjoku.uz overrides both, because it is served from a
+ * subpath under someone else's domain.
+ *
+ *   SITE_ORIGIN=https://tengdosh.uzjoku.uz  SITE_BASE=/malika  pnpm build
+ */
+const ORIGIN = process.env.SITE_ORIGIN || SITE.origin;
+const BASE = process.env.SITE_BASE || '/';
 
 /**
  * Reports font-glyph coverage at the end of every build, including on Vercel and
@@ -34,7 +44,8 @@ const glyphCoverageReport = () => ({
 });
 
 export default defineConfig({
-  site: SITE.origin,
+  site: ORIGIN,
+  base: BASE,
 
   /**
    * Still 'static': every public page is prerendered exactly as before. The
@@ -44,7 +55,7 @@ export default defineConfig({
    * asserts no Keystatic JS reaches a public page.
    */
   output: 'static',
-  adapter: vercel(),
+  adapter: node({ mode: 'standalone' }),
   trailingSlash: 'never',
   // The whole stylesheet is small; inlining removes a render-blocking round trip,
   // which is the single biggest LCP lever on a slow mobile connection.

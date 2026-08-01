@@ -7,3 +7,10 @@ dist/
 !.env.example
 .DS_Store
 *.log
+
+# Deploy-time config and secrets — never committed
+.env.deploy
+.admin-password.txt
+
+# Stale output from the Vercel adapter (superseded by @astrojs/node)
+.vercel/
