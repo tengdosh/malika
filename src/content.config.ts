@@ -102,6 +102,11 @@ const site = defineCollection({
         .optional(),
       portrait: image().optional(),
       portraitAlt: z.string().optional(),
+
+      /* sozlamalar.md — switches that belong to Malika, not to a deploy.
+         Named exactly as the CMS fields so the two cannot drift. */
+      hisoblagichKorsatilsin: z.boolean().default(true),
+      hisoblagichMinimum: z.number().min(0).default(0),
     }),
 });
 

@@ -1,6 +1,6 @@
 ---
 import { SITE } from '../lib/site.js';
-import { formatDate, isoDate } from '../lib/format';
+import { formatDate, isoDate, formatCount } from '../lib/format';
 
 interface Props {
   date: Date;
@@ -8,9 +8,14 @@ interface Props {
   reviewedBy?: string;
   /** Notes show "Yangilanib boradi" rather than a publish date. */
   evergreen?: boolean;
+  /**
+   * All-time reads, or undefined to render nothing. Baked in at build time —
+   * see src/lib/analytics. Sits with the other metadata rather than as a badge.
+   */
+  views?: number;
 }
 
-const { date, updated, reviewedBy, evergreen = false } = Astro.props;
+const { date, updated, reviewedBy, evergreen = false, views } = Astro.props;
 ---
 
 <div class="byline">
@@ -37,6 +42,7 @@ const { date, updated, reviewedBy, evergreen = false } = Astro.props;
           </>
         )
       }
+      {views !== undefined && <>{' · '}{formatCount(views)} marta oʻqildi</>}
     </p>
     {reviewedBy && <p class="byline__reviewed">{reviewedBy} tomonidan koʻrib chiqilgan</p>}
   </div>

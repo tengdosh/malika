@@ -11,6 +11,8 @@ import MedicalNotice from '../components/MedicalNotice.astro';
 import { SITE } from '../lib/site.js';
 import { blogPostingJsonLd, medicalWebPageJsonLd } from '../lib/jsonld';
 import { entryHref, type Entry } from '../lib/entries';
+import { getViewCounts } from '../lib/analytics';
+import { getSettings, counterFor } from '../lib/settings';
 
 interface Props {
   entry: Entry;
@@ -21,8 +23,14 @@ const { title, description, pillar, date, updated, cover, coverAlt, sources, rev
   entry.data;
 
 const { Content } = await render(entry);
-const url = new URL(entryHref(entry), SITE.origin).href;
+const href = entryHref(entry);
+const url = new URL(href, SITE.origin).href;
 const isHealth = pillar === 'koz-sogligi';
+
+// Baked into the static HTML at build time. getViewCounts() is memoised for the
+// whole build, so one API call serves every post, and it resolves to an empty
+// map when analytics is unconfigured or unreachable — which renders no counter.
+const views = counterFor((await getViewCounts()).get(href), await getSettings());
 
 // Open Graph card: the post's own cover when it has one, else the site default.
 const ogImage = cover
@@ -72,7 +80,13 @@ const jsonLd = [
       )
     }
 
-    <Byline date={date} updated={updated} reviewedBy={reviewedBy} evergreen={evergreen} />
+    <Byline
+      date={date}
+      updated={updated}
+      reviewedBy={reviewedBy}
+      evergreen={evergreen}
+      views={views ?? undefined}
+    />
 
     <div class="prose">
       <Content />
