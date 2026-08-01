@@ -453,6 +453,56 @@ No visitor personal data is stored anywhere, which keeps the site clear of
 Uzbekistan's sensitive-data localisation rules and makes foreign hosting
 straightforward. `/maxfiylik` ships from day one and describes exactly this.
 
+### Analytics API and the admin area
+
+Two separate things share the word "analytics":
+
+| | Purpose | Where the key lives |
+|---|---|---|
+| `PUBLIC_ANALYTICS_DOMAIN` | the cookieless tracking tag on public pages | public, by design |
+| `ANALYTICS_PROVIDER` + provider keys | reading stats back at **build time** | server only, never in the browser |
+
+**Provider: self-hosted Umami.** Plausible Cloud gates its Stats API behind plan
+tier, and the requirements here are modest, so paying for API access is not
+warranted. Umami gives full API access at no cost and keeps the data on
+infrastructure we control. A Plausible adapter is kept in
+`src/lib/analytics/plausible.ts` so switching is an environment change, not a
+code change — set `ANALYTICS_PROVIDER=plausible`.
+
+Everything is read on the build machine and baked into the static HTML: no
+analytics request happens at page load, so the zero-client-JS budget is intact
+and visitors are never sent to a third party. One memoised call serves the stats
+page and every post counter.
+
+**If the API is unreachable, slow, misconfigured or empty, the build succeeds**
+and posts simply render no counter. `scripts/check-analytics.mjs` proves this
+against a mock Umami, including the outage case.
+
+The admin area is protected at the **edge**, not by the framework:
+`middleware.ts` (Vercel) and `functions/admin/_middleware.js` (Cloudflare Pages)
+do HTTP basic auth from `ADMIN_USER` / `ADMIN_PASSWORD`. Platform middleware
+rather than Astro middleware, because Astro middleware needs an SSR adapter and
+the build is deliberately adapter-free. Both **fail closed**: with the variables
+unset the route returns 503 rather than becoming public. `/admin/*` is also
+`noindex`, excluded from the sitemap, `Disallow`ed in robots.txt, and served
+`no-store`.
+
+Malika's own instructions are in [docs/malika-uchun.md](docs/malika-uchun.md).
+
+### Daily rebuild
+
+View counts are baked in, so they are only as fresh as the last build.
+`.github/workflows/rebuild.yml` triggers a deploy once a day.
+
+> **Not Vercel Cron.** Vercel cron jobs invoke a serverless function, which would
+> require adding an SSR adapter. A deploy hook achieves the same thing, works
+> identically on Cloudflare Pages, and keeps the build adapter-free. Create a
+> deploy hook in the host dashboard and store it as the `DEPLOY_HOOK_URL`
+> repository secret; without it the job no-ops rather than failing.
+
+The stats page is rebuilt on the same cadence, so its numbers can be up to a day
+behind. That is stated on the page itself.
+
 ### Social handles
 
 `SOCIAL.telegram` and `SOCIAL.instagram` in `src/lib/site.js` are **unset**. The
@@ -492,6 +542,26 @@ scripts/
   check-*.mjs           the gate
   shots.mjs             screenshot routes from dist/ for visual review
 ```
+
+## Upgrade risks
+
+Things most likely to break on a dependency bump, and what to check:
+
+- **Platform middleware.** `middleware.ts` follows Vercel's convention and
+  `functions/admin/_middleware.js` follows Cloudflare's. Neither is exercised by
+  `pnpm build` or `pnpm check` — they only run on the deployed host. **After any
+  host or config change, load `/admin/statistika` in a private window and confirm
+  it asks for a password.** If auth silently stops running, the page is public.
+- **Admin bar instead of CMS sidebar injection.** No DOM injection is used
+  anywhere: a CMS, when installed, is linked from the admin bar via
+  `ADMIN.cmsPath` in `src/lib/site.js`. Nothing here depends on a CMS's internal
+  markup, so a CMS upgrade cannot break navigation. The direct URL is documented
+  for Malika regardless.
+- **Umami API shape.** `src/lib/analytics/umami.ts` targets Umami v2
+  (`/api/websites/:id/stats` and `/metrics`). A v3 would likely change these.
+  Failure is graceful — counters disappear, builds pass — so watch for
+  `[analytics]` warnings in the build log rather than a red build.
+- **Astro `astro:build:done` hook** used by the glyph-coverage reporter.
 
 ## Not in scope
 
