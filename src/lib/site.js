@@ -33,5 +33,31 @@ export const SOCIAL = {
 /** Only the handles that are actually configured, in a stable order. */
 export const socialUrls = () => [SOCIAL.telegram, SOCIAL.instagram].filter(Boolean);
 
-/** Pages axe + Lighthouse run against in CI. */
+/** Public pages axe + Lighthouse run against in CI. */
 export const AUDIT_ROUTES = ['/', '/yozuvlar/navbatchilikdan-keyin', '/men-haqimda'];
+
+/**
+ * Additionally audited for accessibility but not for performance: the admin area
+ * is behind auth and its load time is irrelevant, but Malika uses it and a data
+ * table is easy to get wrong.
+ */
+export const A11Y_ONLY_ROUTES = ['/admin/statistika'];
+
+/**
+ * Admin area. Protected at the edge by HTTP basic auth (middleware.ts for
+ * Vercel, functions/admin/_middleware.js for Cloudflare Pages), noindex,
+ * excluded from the sitemap, and Disallowed in robots.txt.
+ */
+export const ADMIN = {
+  statsPath: '/admin/statistika',
+
+  /**
+   * TODO(cms): path to the CMS, once one is installed (e.g. '/keystatic').
+   *
+   * Left unset rather than pointed at a route that does not exist — a dead link
+   * in the admin bar is worse than no link. Setting this makes the CMS appear in
+   * the admin bar, giving one-click navigation in both directions.
+   */
+  /** @type {string | undefined} */
+  cmsPath: undefined,
+};

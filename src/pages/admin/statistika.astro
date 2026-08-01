@@ -1,0 +1,164 @@
+---
+import Admin from '../../layouts/Admin.astro';
+import { getAnalyticsSnapshot, analyticsConfigured } from '../../lib/analytics';
+import { getPosts, getNotes, entryHref } from '../../lib/entries';
+import { formatCount, formatDate } from '../../lib/format';
+import { PILLAR_LABEL } from '../../lib/pillars';
+
+// Fetched on the build machine. The API key never reaches the browser, and this
+// page makes no request at page load.
+const snapshot = await getAnalyticsSnapshot();
+const configured = analyticsConfigured();
+
+const views = new Map<string, number>();
+for (const page of snapshot?.pages ?? []) {
+  views.set(page.path, (views.get(page.path) ?? 0) + page.pageviews);
+}
+
+// Every post and note, most-read first. Entries with no data sort last but are
+// still listed, so nothing looks like it silently disappeared.
+const entries = [...(await getPosts()), ...(await getNotes())]
+  .map((entry) => ({
+    title: entry.data.title,
+    pillar: PILLAR_LABEL[entry.data.pillar],
+    date: entry.data.date,
+    href: entryHref(entry),
+    views: views.get(entryHref(entry)) ?? 0,
+  }))
+  .sort((a, b) => b.views - a.views || b.date.getTime() - a.date.getTime());
+
+const PERIODS = [
+  { key: 'd7', label: 'Soʻnggi 7 kun' },
+  { key: 'd30', label: 'Soʻnggi 30 kun' },
+  { key: 'all', label: 'Butun davr' },
+] as const;
+
+const fetchedAt = snapshot ? new Date(snapshot.fetchedAt) : null;
+---
+
+<Admin title="Statistika">
+  <div class="admin__head">
+    <h1>Statistika</h1>
+    {
+      fetchedAt ? (
+        <p class="admin__note">
+          Maʼlumot {snapshot?.provider === 'umami' ? 'Umami' : 'Plausible'} dan olingan.
+          Oxirgi yangilanish: {formatDate(fetchedAt)}. Bu sahifa har kuni qayta yigʻiladi,
+          shuning uchun raqamlar bir kungacha kechikishi mumkin.
+        </p>
+      ) : (
+        <p class="admin__note">
+          Hozircha maʼlumot yoʻq.
+          {configured
+            ? ' Statistika xizmatiga ulanib boʻlmadi yoki hali maʼlumot toʻplanmagan.'
+            : ' Statistika xizmati hali ulanmagan.'}
+        </p>
+      )
+    }
+  </div>
+
+  {
+    !snapshot && (
+      <p class="empty">
+        Raqamlar paydo boʻlishi bilan shu yerda koʻrinadi. Sayt bu paytda ham normal
+        ishlaydi — statistika boʻlmasa, yozuvlarda hisoblagich koʻrsatilmaydi, xolos.
+      </p>
+    )
+  }
+
+  {
+    snapshot && (
+      <>
+        <section class="admin__section" aria-labelledby="tashriflar">
+          <h2 id="tashriflar">Tashriflar</h2>
+          <div class="statgrid">
+            {PERIODS.map((period) => {
+              const totals = snapshot.periods[period.key];
+              return (
+                <div class="statcard">
+                  <p class="statcard__label">{period.label}</p>
+                  <p class="statcard__value">{formatCount(totals.visits)}</p>
+                  <p class="statcard__meta">tashrif</p>
+                  <dl class="statcard__rows">
+                    <div>
+                      <dt>Noyob tashrifchilar</dt>
+                      <dd>{formatCount(totals.visitors)}</dd>
+                    </div>
+                    <div>
+                      <dt>Sahifa koʻrishlari</dt>
+                      <dd>{formatCount(totals.pageviews)}</dd>
+                    </div>
+                  </dl>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        <section class="admin__section" aria-labelledby="yozuvlar">
+          <h2 id="yozuvlar">Yozuvlar boʻyicha</h2>
+          <p class="admin__note">Eng koʻp oʻqilganidan boshlab. Raqamlar butun davr uchun.</p>
+
+          <div class="tablewrap">
+            <table class="admintable">
+              <thead>
+                <tr>
+                  <th scope="col">Yozuv</th>
+                  <th scope="col">Mavzu</th>
+                  <th scope="col" class="admintable__num">Oʻqilgan</th>
+                </tr>
+              </thead>
+              <tbody>
+                {entries.map((entry) => (
+                  <tr>
+                    <th scope="row"><a href={entry.href}>{entry.title}</a></th>
+                    <td>{entry.pillar}</td>
+                    <td class="admintable__num">
+                      {entry.views > 0 ? formatCount(entry.views) : '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <div class="admin__columns">
+          <section class="admin__section" aria-labelledby="qayerdan">
+            <h2 id="qayerdan">Qayerdan kelishgan</h2>
+            <p class="admin__note">Soʻnggi 30 kun.</p>
+            {snapshot.referrers.length === 0 ? (
+              <p class="empty">Maʼlumot yoʻq.</p>
+            ) : (
+              <ol class="ranklist">
+                {snapshot.referrers.map((item) => (
+                  <li>
+                    <span class="ranklist__name">{item.name}</span>
+                    <span class="ranklist__value">{formatCount(item.visitors)}</span>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </section>
+
+          <section class="admin__section" aria-labelledby="joylar">
+            <h2 id="joylar">{snapshot.placesLabel}</h2>
+            <p class="admin__note">Soʻnggi 30 kun.</p>
+            {snapshot.places.length === 0 ? (
+              <p class="empty">Maʼlumot yoʻq.</p>
+            ) : (
+              <ol class="ranklist">
+                {snapshot.places.map((item) => (
+                  <li>
+                    <span class="ranklist__name">{item.name}</span>
+                    <span class="ranklist__value">{formatCount(item.visitors)}</span>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </section>
+        </div>
+      </>
+    )
+  }
+</Admin>

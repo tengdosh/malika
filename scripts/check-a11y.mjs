@@ -13,7 +13,7 @@ import { createRequire } from 'node:module';
 import puppeteer from 'puppeteer-core';
 
 import { findChrome, serveDist, CHROME_ARGS } from './lib/browser.mjs';
-import { AUDIT_ROUTES } from '../src/lib/site.js';
+import { AUDIT_ROUTES, A11Y_ONLY_ROUTES } from '../src/lib/site.js';
 
 const require = createRequire(import.meta.url);
 const axeSource = readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
@@ -79,7 +79,7 @@ const structuralAudit = () => {
   return problems;
 };
 
-for (const route of AUDIT_ROUTES) {
+for (const route of [...AUDIT_ROUTES, ...A11Y_ONLY_ROUTES]) {
   for (const theme of ['light', 'dark']) {
     const page = await browser.newPage();
     await page.setViewport({ width: 390, height: 844, deviceScaleFactor: 2 });

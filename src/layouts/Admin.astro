@@ -1,0 +1,65 @@
+---
+import { ADMIN } from '../lib/site.js';
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+const path = Astro.url.pathname.replace(/\/$/, '');
+---
+
+<!doctype html>
+<html lang="uz" data-theme="light" data-textsize="md">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title} — Boshqaruv</title>
+
+    <!-- Belt and braces alongside the edge auth: never indexed, never in the
+         sitemap (see astro.config.mjs), Disallowed in robots.txt. -->
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href="/fonts/alegreya-sans/alegreya-sans-latin-400-normal.woff2"
+      crossorigin
+    />
+  </head>
+
+  <body>
+    <a class="skip-link" href="#asosiy">Asosiy mazmunga oʻtish</a>
+
+    <!-- Persistent admin bar. Keystatic has no supported API for adding links to
+         its own sidebar, so navigation between the two lives here instead — one
+         click either way, and nothing to break on a Keystatic upgrade. -->
+    <header class="adminbar">
+      <div class="shell adminbar__inner">
+        <span class="adminbar__mark">Boshqaruv</span>
+        <nav class="adminbar__nav" aria-label="Boshqaruv menyusi">
+          {
+            /* TODO(cms): set ADMIN.cmsPath once the CMS is installed. Rendering a
+               link to a route that does not exist would be worse than omitting it. */
+            ADMIN.cmsPath && (
+              <a href={ADMIN.cmsPath} aria-current={path === ADMIN.cmsPath ? 'page' : undefined}>
+                Yozuvlarni tahrirlash
+              </a>
+            )
+          }
+          <a href="/admin/statistika" aria-current={path === '/admin/statistika' ? 'page' : undefined}>
+            Statistika
+          </a>
+          <a href="/">Saytga qaytish</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="asosiy" class="shell admin">
+      <slot />
+    </main>
+  </body>
+</html>

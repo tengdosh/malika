@@ -629,3 +629,120 @@ a.pillar-chip:hover { background: var(--plum); color: var(--paper); }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
 }
+
+/* ------------------------------------------------------------- admin area */
+/* Same tokens as the public site — no new colours, no default table styling.
+   Not reachable without auth; see middleware.ts. */
+
+.adminbar {
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+.adminbar__inner {
+  display: flex;
+  align-items: center;
+  gap: clamp(1rem, 3vw, 2rem);
+  flex-wrap: wrap;
+  padding-block: 1rem;
+}
+.adminbar__mark {
+  font-family: var(--display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-right: auto;
+}
+.adminbar__nav { display: flex; gap: clamp(0.9rem, 2.4vw, 1.5rem); flex-wrap: wrap; }
+.adminbar__nav a {
+  font-size: var(--t-small);
+  font-weight: 500;
+  color: var(--muted);
+  text-decoration: none;
+  padding-block: 0.35rem;
+  border-bottom: 2px solid transparent;
+}
+.adminbar__nav a:hover { color: var(--ink); }
+.adminbar__nav a[aria-current='page'] { color: var(--ink); border-bottom-color: var(--blush); }
+
+.admin { padding-block: clamp(2rem, 5vw, 3rem); }
+.admin__head { max-width: var(--measure); }
+.admin__head h1 { font-size: clamp(1.9rem, 5vw, 2.6rem); }
+.admin__note { color: var(--muted); font-size: var(--t-small); margin-top: 0.6rem; max-width: 56ch; }
+.admin__section { margin-top: clamp(2.25rem, 6vw, 3.5rem); }
+.admin__section h2 { font-size: clamp(1.35rem, 3vw, 1.7rem); }
+.admin__columns { display: grid; gap: clamp(1.5rem, 4vw, 2.5rem); }
+@media (min-width: 46rem) {
+  .admin__columns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.statgrid {
+  display: grid;
+  gap: clamp(0.9rem, 2.5vw, 1.25rem);
+  margin-top: 1.25rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (min-width: 40rem) {
+  .statgrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+.statcard {
+  background: var(--surface);
+  border-radius: var(--arch-media);
+  padding: clamp(1.15rem, 3vw, 1.6rem);
+}
+.statcard__label {
+  font-size: var(--t-meta);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--plum);
+}
+.statcard__value {
+  font-family: var(--display);
+  font-size: clamp(2rem, 5vw, 2.6rem);
+  line-height: 1.05;
+  margin-top: 0.5rem;
+  font-variant-numeric: tabular-nums;
+}
+.statcard__meta { font-size: var(--t-small); color: var(--muted); }
+.statcard__rows { margin-top: 1rem; display: grid; gap: 0.4rem; }
+.statcard__rows > div { display: flex; justify-content: space-between; gap: 1rem; }
+.statcard__rows dt { font-size: var(--t-meta); color: var(--muted); }
+.statcard__rows dd { font-size: var(--t-meta); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* Wide tables scroll inside their own container; the page never scrolls sideways. */
+.tablewrap { overflow-x: auto; margin-top: 1.25rem; }
+.admintable { border-collapse: collapse; width: 100%; min-width: 34rem; }
+.admintable th, .admintable td {
+  text-align: left;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--line);
+  font-size: var(--t-small);
+  font-weight: 400;
+}
+.admintable thead th {
+  font-size: var(--t-meta);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom-color: var(--blush);
+}
+.admintable tbody th { font-weight: 600; }
+.admintable tbody th a { color: var(--ink); text-decoration: none; }
+.admintable tbody th a:hover { color: var(--plum); text-decoration: underline; }
+.admintable td { color: var(--muted); }
+.admintable__num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+@media (hover: hover) {
+  .admintable tbody tr:hover { background: var(--surface); }
+}
+
+.ranklist { list-style: none; padding: 0; margin-top: 1.25rem; display: grid; }
+.ranklist li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block: 0.7rem;
+  border-bottom: 1px solid var(--line);
+  font-size: var(--t-small);
+}
+.ranklist__name { overflow-wrap: anywhere; }
+.ranklist__value { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }

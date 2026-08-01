@@ -37,7 +37,13 @@ export default defineConfig({
   // The whole stylesheet is small; inlining removes a render-blocking round trip,
   // which is the single biggest LCP lever on a slow mobile connection.
   build: { inlineStylesheets: 'always' },
-  integrations: [mdx(), sitemap(), glyphCoverageReport()],
+  integrations: [
+    mdx(),
+    // The admin area is never indexed: excluded here, noindex in the page head,
+    // Disallowed in robots.txt, and behind basic auth at the edge.
+    sitemap({ filter: (page) => !new URL(page).pathname.startsWith('/admin') }),
+    glyphCoverageReport(),
+  ],
   markdown: {
     shikiConfig: { theme: 'github-light', wrap: true },
   },
