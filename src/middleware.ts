@@ -6,8 +6,9 @@ import { stripBase } from './lib/site.js';
  * HTTP basic auth for /admin/*.
  *
  * Astro middleware, not platform config: it runs as part of the app, so it works
- * on any host and — unlike the Vercel/Cloudflare middleware it replaces — it can
- * be covered by a fixture. scripts/check-middleware.mjs does exactly that.
+ * on any host and can be covered by a fixture — scripts/check-middleware.mjs
+ * boots the built server and asserts the whole matrix. (It replaced per-platform
+ * edge middleware that no check could reach; those files are long gone.)
  *
  * IMPORTANT: Astro middleware only runs per request for ON-DEMAND routes. For a
  * prerendered page it runs once at build time, which is useless for auth. That

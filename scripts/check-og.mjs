@@ -151,6 +151,25 @@ if (postPages.length === 0) {
     `${generated.length}/${cards.length} unique`,
   );
 
+  /*
+   * Precondition, not decoration. Two assertions below depend on yozgi-kitoblar
+   * having no cover and navbatchilikdan-keyin having one. Add a cover to the
+   * first and the "points at its generated card" assertion fails with a message
+   * about OG images, when the real cause is a content change. State it plainly.
+   */
+  const noCoverPost = readFileSync('src/content/posts/yozgi-kitoblar.md', 'utf8');
+  const coveredPost = readFileSync('src/content/posts/navbatchilikdan-keyin.md', 'utf8');
+  check(
+    'the no-cover fixture post still has no cover',
+    !/^cover:/m.test(noCoverPost),
+    'src/content/posts/yozgi-kitoblar.md',
+  );
+  check(
+    'the with-cover fixture post still has one',
+    /^cover:/m.test(coveredPost),
+    'src/content/posts/navbatchilikdan-keyin.md',
+  );
+
   const withoutCover = `${dist}/yozuvlar/yozgi-kitoblar/index.html`;
   if (existsSync(withoutCover)) {
     const html = readFileSync(withoutCover, 'utf8');

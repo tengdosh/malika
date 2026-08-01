@@ -89,6 +89,54 @@ try {
     );
   }
 
+  // 1b — The colour rules must bite. `--blush is never a text colour` was
+  //      written in tokens.css and in the check's own header, and enforced by
+  //      nothing: the check kept its pairings by hand and never read the CSS, so
+  //      `.prose li::marker { color: var(--blush) }` shipped at 2.18:1.
+  {
+    const CSS = 'src/styles/global.css';
+    const original = readFileSync(CSS, 'utf8');
+    cleanups.push(() => writeFileSync(CSS, original));
+
+    const withRule = (rule) => writeFileSync(CSS, `${original}\n${rule}\n`);
+
+    withRule('.zz-fixture { color: var(--blush); }');
+    expectFailure(
+      'contrast check rejects --blush as a foreground',
+      fails('node', ['scripts/check-contrast.mjs']),
+    );
+
+    withRule('.zz-fixture::marker { color: var(--blush); }');
+    expectFailure(
+      'it rejects --blush in a pseudo-element too',
+      fails('node', ['scripts/check-contrast.mjs']),
+    );
+
+    withRule('.zz-fixture { color: var(--line); }');
+    expectFailure(
+      'it rejects a foreground the CSS uses but PAIRINGS omits',
+      fails('node', ['scripts/check-contrast.mjs']),
+    );
+
+    withRule('.zz-fixture { color: #c0ffee; }');
+    expectFailure(
+      'it rejects a raw hex outside tokens.css',
+      fails('node', ['scripts/check-contrast.mjs']),
+    );
+
+    withRule('.zz-fixture { border-bottom-color: var(--blush); }');
+    expectFailure(
+      '--blush as a border colour is still allowed (control: must NOT fail)',
+      !fails('node', ['scripts/check-contrast.mjs']),
+    );
+
+    writeFileSync(CSS, original);
+    expectFailure(
+      'the unmodified stylesheet passes (control: must NOT fail)',
+      !fails('node', ['scripts/check-contrast.mjs']),
+    );
+  }
+
   // 2b — A post in exactly the shape Keystatic writes must build, and the image
   //      it uploaded must still go through astro:assets. This is the fiddliest
   //      part of Keystatic + Astro: `publicPath` has to stay relative to the

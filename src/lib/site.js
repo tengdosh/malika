@@ -46,9 +46,10 @@ export const AUDIT_ROUTES = ['/', '/yozuvlar/navbatchilikdan-keyin', '/men-haqim
 export const A11Y_ONLY_ROUTES = ['/admin/statistika'];
 
 /**
- * Admin area. Protected at the edge by HTTP basic auth (middleware.ts for
- * Vercel, functions/admin/_middleware.js for Cloudflare Pages), noindex,
- * excluded from the sitemap, and Disallowed in robots.txt.
+ * Admin area. Protected by HTTP basic auth in src/middleware.ts — Astro
+ * middleware, so it runs inside the app on any host and is covered by
+ * scripts/check-middleware.mjs. Also noindex, excluded from the sitemap, and
+ * Disallowed in robots.txt.
  */
 export const ADMIN = {
   statsPath: '/admin/statistika',

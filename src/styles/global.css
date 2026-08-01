@@ -551,7 +551,10 @@ a.pillar-chip:hover { background: var(--plum); color: var(--paper); }
 .prose h2 { font-size: clamp(1.45rem, 3.2vw, 1.85rem); margin-top: 2.1em; }
 .prose h3 { font-size: clamp(1.2rem, 2.6vw, 1.4rem); margin-top: 1.8em; }
 .prose ul, .prose ol { padding-left: 1.35rem; display: grid; gap: 0.45rem; }
-.prose li::marker { color: var(--blush); }
+/* --muted, not --blush: a marker is a graphical element, so WCAG 1.4.11 asks
+   for 3:1 — and --blush is 2.18:1 on --paper in light mode. It matches the
+   ordered-list marker below, which was already --muted. */
+.prose li::marker { color: var(--muted); }
 .prose ol li::marker { color: var(--muted); font-size: var(--t-small); }
 .prose blockquote {
   border-left: 3px solid var(--blush);

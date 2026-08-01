@@ -18,6 +18,3 @@ dist/
 
 # Scratch output from check scripts
 .tmp/
-
-# Scratch output from check scripts
-.tmp/
