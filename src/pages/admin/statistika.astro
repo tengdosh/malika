@@ -1,4 +1,18 @@
 ---
+/**
+ * Rendered on demand, NOT prerendered.
+ *
+ * This is required for the auth to work at all: Astro middleware runs per
+ * request only for on-demand routes: for a prerendered page it runs once at
+ * build time and the result is baked into a static file the web server hands
+ * out to anyone. A prerendered admin page cannot be protected by middleware.
+ *
+ * Side effect worth knowing: analytics are now fetched when the server first
+ * renders this page rather than at build, and memoised for the process
+ * lifetime. Same refresh cadence as before — the daily rebuild restarts it.
+ */
+export const prerender = false;
+
 import Admin from '../../layouts/Admin.astro';
 import { getAnalyticsSnapshot, analyticsConfigured } from '../../lib/analytics';
 import { getPosts, getNotes, entryHref } from '../../lib/entries';

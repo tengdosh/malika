@@ -18,6 +18,7 @@ const STEPS = [
   { name: 'glyphs', label: 'Font glyph coverage', cmd: ['node', ['scripts/check-glyphs.mjs']] },
   { name: 'cms-isolation', label: 'No CMS/React JS on public pages', cmd: ['node', ['scripts/check-keystatic-isolation.mjs']] },
   { name: 'og', label: 'Open Graph cards + Uzbek glyphs', cmd: ['node', ['scripts/check-og.mjs']] },
+  { name: 'middleware', label: 'Admin auth (Astro middleware)', cmd: ['node', ['scripts/check-middleware.mjs']] },
   { name: 'a11y', label: 'axe + structural a11y', cmd: ['node', ['scripts/check-a11y.mjs']] },
   { name: 'behaviour', label: 'Theme/text-size persistence, reduced motion', cmd: ['node', ['scripts/check-behaviour.mjs']] },
   { name: 'analytics', label: 'Analytics pipeline + outage tolerance', cmd: ['node', ['scripts/check-analytics.mjs']] },

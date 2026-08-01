@@ -231,8 +231,8 @@ only exceptions are the two schema rules (required `sources`, required
 CI.
 
 The analysis also runs as an Astro integration on `astro:build:done`, so the
-summary line and any warnings appear in the Vercel/Cloudflare build log, not
-only in `pnpm check`. A warning nobody sees in CI is a warning nobody sees.
+summary line and any warnings appear in the deploy build log, not only in
+`pnpm check`. A warning nobody sees in CI is a warning nobody sees.
 
 Some characters cannot be fixed by widening the charset: **Alegreya's latin
 subset contains no horizontal arrows at all** (`→ ← ↔`), nor `≈ ≤ ≥ ≠ ∞ √ №`,
@@ -319,8 +319,9 @@ one full round trip (~560ms simulated) per resource on the critical path, so its
 absolute numbers are pessimistic for any site that self-hosts a webfont.
 
 The local audit server (`scripts/lib/browser.mjs`) serves brotli/gzip, because
-Vercel and Cloudflare both do. Measuring against uncompressed HTML inflated FCP
-by ~700ms — an artefact of the harness, not the site.
+any sane web server does. Measuring against uncompressed HTML inflated FCP by
+~700ms — an artefact of the harness, not the site. See Deployment for the
+headers the server must set.
 
 ---
 
@@ -459,97 +460,6 @@ is synced separately for assistive tech.
 
 ---
 
-## Deployment
-
-Static output, no adapter — portable between Vercel and Cloudflare Pages.
-
-```
-pnpm build   # → dist/
-```
-
-**Canonical origin is `https://malika-bobonazarova.uz`.** Every other hostname
-must 301 to it at the edge:
-
-- **Vercel** — `vercel.json` (`redirects`, host-matched on `www.`)
-- **Cloudflare Pages** — `public/_redirects`
-
-Both also ship `Cache-Control: immutable` for `/fonts/*` and `/_astro/*`, plus
-`nosniff`, `Referrer-Policy` and HSTS.
-
-Add the apex domain **and** `www` in the host's dashboard, pointing both at this
-project — the redirect rules only fire for hostnames the host actually serves.
-
-### Analytics
-
-Cookieless and off by default. Set `PUBLIC_ANALYTICS_DOMAIN` in the host's
-environment to enable it in production builds only; dev and CI never load it. See
-`.env.example`. `PUBLIC_ANALYTICS_SRC` switches Plausible for a self-hosted Umami.
-
-No visitor personal data is stored anywhere, which keeps the site clear of
-Uzbekistan's sensitive-data localisation rules and makes foreign hosting
-straightforward. `/maxfiylik` ships from day one and describes exactly this.
-
-### Analytics API and the admin area
-
-Two separate things share the word "analytics":
-
-| | Purpose | Where the key lives |
-|---|---|---|
-| `PUBLIC_ANALYTICS_DOMAIN` | the cookieless tracking tag on public pages | public, by design |
-| `ANALYTICS_PROVIDER` + provider keys | reading stats back at **build time** | server only, never in the browser |
-
-**Provider: self-hosted Umami.** Plausible Cloud gates its Stats API behind plan
-tier, and the requirements here are modest, so paying for API access is not
-warranted. Umami gives full API access at no cost and keeps the data on
-infrastructure we control. A Plausible adapter is kept in
-`src/lib/analytics/plausible.ts` so switching is an environment change, not a
-code change — set `ANALYTICS_PROVIDER=plausible`.
-
-Everything is read on the build machine and baked into the static HTML: no
-analytics request happens at page load, so the zero-client-JS budget is intact
-and visitors are never sent to a third party. One memoised call serves the stats
-page and every post counter.
-
-**If the API is unreachable, slow, misconfigured or empty, the build succeeds**
-and posts simply render no counter. `scripts/check-analytics.mjs` proves this
-against a mock Umami, including the outage case.
-
-The admin area is protected at the **edge**, not by the framework:
-`middleware.ts` (Vercel) and `functions/admin/_middleware.js` (Cloudflare Pages)
-do HTTP basic auth from `ADMIN_USER` / `ADMIN_PASSWORD`. Platform middleware
-rather than Astro middleware, because Astro middleware needs an SSR adapter and
-the build is deliberately adapter-free. Both **fail closed**: with the variables
-unset the route returns 503 rather than becoming public. `/admin/*` is also
-`noindex`, excluded from the sitemap, `Disallow`ed in robots.txt, and served
-`no-store`.
-
-Malika's own instructions are in [docs/malika-uchun.md](docs/malika-uchun.md).
-
-### Daily rebuild
-
-View counts are baked in, so they are only as fresh as the last build.
-`.github/workflows/rebuild.yml` triggers a deploy once a day.
-
-> **Not Vercel Cron.** Vercel cron jobs invoke a serverless function, which would
-> require adding an SSR adapter. A deploy hook achieves the same thing, works
-> identically on Cloudflare Pages, and keeps the build adapter-free. Create a
-> deploy hook in the host dashboard and store it as the `DEPLOY_HOOK_URL`
-> repository secret; without it the job no-ops rather than failing.
-
-The stats page is rebuilt on the same cadence, so its numbers can be up to a day
-behind. That is stated on the page itself.
-
-### Social handles
-
-`SOCIAL.telegram` and `SOCIAL.instagram` in `src/lib/site.js` are **unset**. The
-site builds and deploys without them: the Telegram CTA, the footer social link
-and the `/maxfiylik` contact line each render nothing, and `sameAs` is omitted
-from `Person` JSON-LD rather than emitted empty — a guessed or empty `sameAs` is
-worse than none, because it can associate her with a stranger's account. Set the
-two constants when real handles exist; nothing else needs changing.
-
----
-
 ## Structure
 
 ```
@@ -593,20 +503,19 @@ Malika's own guide is [docs/malika-uchun.md](docs/malika-uchun.md).
 
 ### Rendering
 
-Keystatic needs server rendering, so the project now has an SSR adapter
-(`@astrojs/vercel`) and `output: 'static'` behaves as hybrid. **Only Keystatic's
-two injected routes render on demand**; every public page is still prerendered.
-Verified in the Vercel output config — `/keystatic` and `/api/keystatic/*` are
-the only entries pointing at the function.
+Keystatic needs server rendering, so the project has an SSR adapter
+(`@astrojs/node`, standalone) and `output: 'static'` behaves as hybrid. **Only
+three routes render on demand** — `/keystatic`, `/api/keystatic/*` and
+`/admin/statistika`; every public page is still prerendered.
 
 `scripts/check-keystatic-isolation.mjs` asserts the thing that actually matters:
 no public page references React, Keystatic, `astro-island` or any hydration
 runtime, and no public page loads an external script at all. A stray `client:`
 directive would otherwise ship the editor bundle to every reader.
 
-> Because the adapter moved the built output, every check now resolves the
-> served directory through `resolveDistDir()` in `scripts/lib/browser.mjs`:
-> `.vercel/output/static` when present, else `dist/client`, else `dist`.
+> The adapter splits the build, so every check resolves the served directory
+> through `resolveDistDir()` in `scripts/lib/browser.mjs`: `dist/client` when
+> present, else `dist`.
 
 ### Configuration
 
@@ -644,63 +553,93 @@ content file, so `astro:assets` still optimises uploads. A fixture builds a post
 in Keystatic's exact output format and asserts the result has AVIF, WebP and a
 srcset.
 
-## Live deployment: tengdosh.uzjoku.uz/malika
+## Deployment
 
-Served from this repo by systemd + nginx on the tengdosh host, alongside the
-other apps on that box.
+Self-hosted Node. `@astrojs/node` in `standalone` mode; `output` stays `'static'`,
+so all but three routes are prerendered files and the server exists only for the
+ones that cannot be.
+
+### What the server must provide
+
+| | |
+|---|---|
+| Node | 22 or newer (the build uses `AbortSignal.timeout`, `Array.at`, native `fetch`) |
+| Package manager | pnpm (a `pnpm-lock.yaml` is committed) |
+| Build | `pnpm install --frozen-lockfile --prod=false` then `pnpm build` |
+| Run | `pnpm start` — i.e. `node dist/server/entry.mjs` |
+| Listens on | `HOST` / `PORT` (defaults `localhost:4321`) |
+| Process | anything that keeps one Node process alive and restarts it on failure |
+
+The build emits `dist/client` (prerendered pages and assets) and `dist/server`
+(the request handler). Both are needed at runtime — the server serves the client
+directory itself, so a reverse proxy can forward everything to it, or serve
+`dist/client` directly and forward only the on-demand routes.
+
+### Environment
+
+**Build time** — read while `pnpm build` runs, baked into the output:
+
+| Variable | Effect if unset |
+|---|---|
+| `SITE_ORIGIN` | falls back to the canonical origin in `src/lib/site.js` |
+| `SITE_BASE` | `/` — set only when serving from a subpath |
+| `PUBLIC_SITE_ORIGIN` | canonical/OG URLs fall back as above |
+| `PUBLIC_NOINDEX` | site is indexable; set to `1` for any non-canonical deploy |
+| `ANALYTICS_PROVIDER` + provider keys | no view counters, empty stats page, build still succeeds |
+| `INDEXNOW_KEY` | no IndexNow submission |
+| `PUBLIC_KEYSTATIC_*` | CMS falls back to local-file storage |
+
+**Runtime** — read per request by the running server:
+
+| Variable | Effect if unset |
+|---|---|
+| `ADMIN_USER`, `ADMIN_PASSWORD` | `/admin/*` returns **503**, never a public page |
+| `KEYSTATIC_GITHUB_CLIENT_ID` / `_SECRET`, `KEYSTATIC_SECRET` | CMS login fails |
+| `HOST`, `PORT` | `localhost:4321` |
+
+`ADMIN_*` are read from `process.env` at request time, so changing them needs a
+restart but not a rebuild.
+
+### Routes
+
+| Route | Rendering | Must be |
+|---|---|---|
+| everything public | prerendered | reachable |
+| `/keystatic`, `/api/keystatic/*` | on demand | reachable (self-authenticates via GitHub) |
+| `/admin/*` | on demand | reachable, but **never public** — auth is in the app |
+
+`/admin/statistika` is deliberately **not** prerendered. Astro middleware runs
+per request only for on-demand routes; for a prerendered page it runs once at
+build time, so a prerendered admin page would be a static file the web server
+hands to anyone. `scripts/check-keystatic-isolation.mjs` fails if it ever
+reappears in the static output.
+
+### Headers and redirects the app does not do
+
+These used to come from platform config. They are now the server's job:
+
+| Requirement | Why |
+|---|---|
+| Redirect every non-canonical host to the canonical origin, 301 | one indexable hostname |
+| `Cache-Control: public, max-age=31536000, immutable` on `/_astro/*` and `/fonts/*` | content-hashed and subset filenames; safe to pin |
+| Serve br/gzip for HTML, CSS, JS, SVG, XML | measured ~700ms of FCP on a slow connection |
+
+The admin's own `Cache-Control: no-store` and `X-Robots-Tag: noindex, nofollow`
+are set by the middleware, so they survive any host.
+
+### Rebuild
+
+View counts are baked in, so they are only as fresh as the last build.
+`scripts/rebuild.sh` is the contract: it installs, builds, and runs
+`$RESTART_COMMAND` if one is set.
 
 ```bash
-./scripts/deploy.sh      # build with the deploy env, restart, smoke test
-sudo journalctl -u malika -f
+RESTART_COMMAND='<whatever restarts the process>' scripts/rebuild.sh
 ```
 
-| Piece | Where |
-|---|---|
-| Service | `malika.service` — `node dist/server/entry.mjs`, 127.0.0.1:3200 |
-| Deploy env | `.env.deploy` (gitignored) — `SITE_ORIGIN`, `SITE_BASE`, `PUBLIC_NOINDEX` |
-| nginx | `/etc/nginx/sites-enabled/tengdosh_final`, in **both** the :80 and :443 blocks |
-| Admin password | `/etc/nginx/.malika_htpasswd`; plaintext in `.admin-password.txt` (gitignored) |
-
-Adapter is `@astrojs/node` (standalone), matching the house pattern used by
-nashriyot-master. `@astrojs/vercel` is no longer installed; swapping back is a
-one-line change in `astro.config.mjs`.
-
-### Three things this deployment forced
-
-**1. Subpath means `base`, and `base` means `withBase()`.** Astro rewrites its
-own asset URLs for `base` but not paths written by hand in `href`/`src`. Every
-one of those now goes through `withBase()` in `src/lib/site.js`, and route
-comparisons go through `stripBase()`. Miss one and it silently points at the
-domain root.
-
-**2. Keystatic ignores `base`.** At `/malika/keystatic` the page returns 200 but
-the app renders "Not found": its client router and its `/api/keystatic/*` calls
-assume they sit at the origin root. The CMS is therefore mounted at the **root**
-of the domain (`/keystatic`, `/api/keystatic`) and rewritten onto the app's
-`/malika` prefix by nginx. It works, but it squats a generic path on a shared
-domain. **A subdomain (`malika.uzjoku.uz`) would remove this workaround, the
-`base` config and `withBase()` entirely** — worth doing if the site stays here.
-
-**3. The edge auth did not come along.** `middleware.ts` is Vercel Edge
-Middleware and `functions/admin/_middleware.js` is Cloudflare Pages — *neither
-runs behind nginx*, so `/malika/admin/statistika` was briefly world-readable.
-Auth is now an nginx `auth_basic` block. Both files are kept for those platforms;
-whichever host is in use, **verify the admin prompts for a password after any
-deploy** — `scripts/deploy.sh` fails the smoke test if it returns anything but 401.
-
-### Not yet done here
-
-- **DNS.** `tengdosh.uzjoku.uz` resolves to `195.158.26.100`; this host is
-  `195.158.26.102`. The deploy is live and verified on this box over loopback,
-  but whether that URL reaches it depends on where DNS points.
-- **Keystatic GitHub App.** `/keystatic` loads and shows "Log in with GitHub",
-  but no App is registered yet, so login fails. Needs the four env vars in
-  `.env.example` under "CMS".
-- **Analytics.** No Umami instance yet, so counters are absent and the stats page
-  says so — by design.
-- The site is **noindexed** (`PUBLIC_NOINDEX=1`) because it is serving under a
-  hostname that is not its canonical one. Remove that when it moves to
-  `malika-bobonazarova.uz`.
+Scheduling it is the server's business. Running it without `RESTART_COMMAND`
+only rebuilds — the live process keeps serving the previous build until it is
+restarted.
 
 ## SEO and sharing
 
@@ -779,8 +718,8 @@ Console and the sitemap.
   emitted at `/<key>.txt` automatically.
 - **Failure is always a warning**, never a build error.
 - **A noindexed deploy is never submitted.** Asking Bing to index a staging copy
-  under someone else's hostname is worse than not submitting at all — so the
-  current `tengdosh.uzjoku.uz/malika` deploy skips it by design.
+  is worse than not submitting at all, so any build with `PUBLIC_NOINDEX=1` skips
+  it by design.
 
 ### Verification tokens
 
@@ -805,25 +744,6 @@ Plus `article:published_time` / `article:modified_time`, `og:image:width/height`
 and a self-referencing `hreflang` (`uz` + `x-default`) — harmless today, correct
 the day `/ru` lands.
 
-## DNS — required before any of this can be verified
-
-**The canonical origin does not currently point at the deployment.**
-
-| Record | Current | Required |
-|---|---|---|
-| `malika-bobonazarova.uz` A | — (not delegated here) | the host serving the site |
-| `tengdosh.uzjoku.uz` A | `195.158.26.100` | `195.158.26.102` (this host) |
-
-Until that is fixed at the registrar:
-
-- Search Console and Yandex Webmaster **cannot verify** the site
-- IndexNow submissions would be rejected — the key file is unreachable
-- share previews cannot be tested, because no crawler can fetch the page
-
-Everything above is built and passing locally; none of it can be confirmed
-against the live domain until DNS resolves to the right host. The site is
-`noindex` in the meantime, deliberately.
-
 ## Known gaps
 
 Reported rather than worked around:
@@ -843,11 +763,6 @@ Reported rather than worked around:
 
 Things most likely to break on a dependency bump, and what to check:
 
-- **Platform middleware.** `middleware.ts` follows Vercel's convention and
-  `functions/admin/_middleware.js` follows Cloudflare's. Neither is exercised by
-  `pnpm build` or `pnpm check` — they only run on the deployed host. **After any
-  host or config change, load `/admin/statistika` in a private window and confirm
-  it asks for a password.** If auth silently stops running, the page is public.
 - **Admin bar instead of CMS sidebar injection.** No DOM injection is used
   anywhere: a CMS, when installed, is linked from the admin bar via
   `ADMIN.cmsPath` in `src/lib/site.js`. Nothing here depends on a CMS's internal
@@ -868,21 +783,17 @@ Things most likely to break on a dependency bump, and what to check:
   back to Keystatic Cloud (free up to 3 users, and editors then need no GitHub
   account) — do not leave a broken admin.
 
-## Follow-ups the adapter unlocks
+## Admin auth
 
-Both were shaped by the adapter-free constraint, which no longer applies. Neither
-was changed in this pass:
+`src/middleware.ts` — Astro middleware, so it runs inside the app on any host and
+can be tested. `scripts/check-middleware.mjs` boots the real built server and
+asserts the whole matrix: no credentials, wrong password, wrong username, a
+malformed header, correct credentials, and the fail-closed 503 when
+`ADMIN_USER`/`ADMIN_PASSWORD` are unset.
 
-- **Auth middleware could become Astro middleware.** `/admin/*` is currently
-  protected by platform middleware (`middleware.ts` for Vercel,
-  `functions/admin/_middleware.js` for Cloudflare) because Astro middleware
-  needed an adapter. One Astro middleware would replace both and be exercised by
-  `pnpm dev`, which is the real win — today neither file runs during `pnpm build`
-  or `pnpm check`. The trade-off is that it stops being portable between hosts.
-- **The daily rebuild could become a platform cron.** `.github/workflows/rebuild.yml`
-  pings a deploy hook because Vercel Cron needs a serverless function. With the
-  adapter present, a cron route is now possible. The current approach still works
-  on both hosts, so this is a simplification rather than a fix.
+This replaced platform middleware that could not be exercised by `pnpm check` at
+all, and which therefore carried a standing "verify by hand after every deploy"
+warning. That warning is gone.
 
 ## Not in scope
 

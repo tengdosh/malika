@@ -18,6 +18,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 
 import { POST_VIEWS, TOTALS } from './lib/mock-umami.mjs';
 import { resolveDistDir } from './lib/browser.mjs';
+import { startNodeServer } from './lib/node-server.mjs';
 
 let failures = 0;
 const check = (name, ok, detail = '') => {
@@ -76,6 +77,28 @@ const WORKING_ENV = {
   UMAMI_API_KEY: 'test-key-do-not-ship',
 };
 
+const ADMIN = { ADMIN_USER: 'stats', ADMIN_PASSWORD: 'stats-fixture-password' };
+const AUTH = `Basic ${Buffer.from(`${ADMIN.ADMIN_USER}:${ADMIN.ADMIN_PASSWORD}`).toString('base64')}`;
+
+/**
+ * The stats page is rendered on demand (it must be, so the auth middleware can
+ * run), so it is fetched from the running server rather than read off disk.
+ * The analytics call therefore happens at REQUEST time here, not at build time —
+ * which is why the mock has to still be up when this runs.
+ */
+async function fetchStatsPage(env) {
+  const app = await startNodeServer({ port: 4491, env: { ...env, ...ADMIN } });
+  try {
+    const response = await fetch(`${app.origin}/admin/statistika`, {
+      headers: { authorization: AUTH },
+      signal: AbortSignal.timeout(20_000),
+    });
+    return { status: response.status, html: await response.text() };
+  } finally {
+    app.stop();
+  }
+}
+
 try {
   // 1 — working API
   build(WORKING_ENV);
@@ -87,7 +110,9 @@ try {
     `${POST_VIEWS['/yozuvlar/navbatchilikdan-keyin']} -> "1 247 marta oʻqildi"`,
   );
 
-  const stats = read(`${resolveDistDir()}/admin/statistika/index.html`);
+  const statsResponse = await fetchStatsPage(WORKING_ENV);
+  check('the stats page requires auth and serves it', statsResponse.status === 200, `HTTP ${statsResponse.status}`);
+  const stats = statsResponse.html;
   check('stats page shows visit totals', stats.includes('1 030'), `visits ${TOTALS.visits}`);
   check(
     'stats page lists a real post with its count',
@@ -152,9 +177,15 @@ try {
       'posts render with no counter when analytics is down',
       !read(`${resolveDistDir()}/yozuvlar/navbatchilikdan-keyin/index.html`).includes('marta oʻqildi'),
     );
+    const down = await fetchStatsPage({
+      ANALYTICS_PROVIDER: 'umami',
+      UMAMI_API_URL: 'http://127.0.0.1:9',
+      UMAMI_WEBSITE_ID: 'test-site',
+      UMAMI_API_KEY: 'test-key-do-not-ship',
+    });
     check(
       'stats page explains itself instead of showing zeroes',
-      read(`${resolveDistDir()}/admin/statistika/index.html`).includes('Hozircha maʼlumot yoʻq'),
+      down.html.includes('Hozircha maʼlumot yoʻq'),
     );
   }
 } finally {

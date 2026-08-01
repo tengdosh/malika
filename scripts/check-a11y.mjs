@@ -13,12 +13,25 @@ import { createRequire } from 'node:module';
 import puppeteer from 'puppeteer-core';
 
 import { findChrome, serveDist, CHROME_ARGS } from './lib/browser.mjs';
+import { startNodeServer } from './lib/node-server.mjs';
 import { AUDIT_ROUTES, A11Y_ONLY_ROUTES } from '../src/lib/site.js';
 
 const require = createRequire(import.meta.url);
 const axeSource = readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
 
 const { server, origin } = await serveDist();
+
+/*
+ * The admin page is rendered on demand now (it has to be, for the auth
+ * middleware to run), so it is not in the static output. It is audited against
+ * the real built server instead, with credentials supplied.
+ */
+const ADMIN_USER = 'a11y';
+const ADMIN_PASSWORD = 'a11y-fixture-password';
+const appServer = A11Y_ONLY_ROUTES.length
+  ? await startNodeServer({ port: 4490, env: { ADMIN_USER, ADMIN_PASSWORD } })
+  : null;
+
 const browser = await puppeteer.launch({ executablePath: findChrome(), args: CHROME_ARGS });
 
 let failures = 0;
@@ -79,12 +92,18 @@ const structuralAudit = () => {
   return problems;
 };
 
-for (const route of [...AUDIT_ROUTES, ...A11Y_ONLY_ROUTES]) {
+const ROUTES = [
+  ...AUDIT_ROUTES.map((route) => ({ route, base: origin, auth: false })),
+  ...A11Y_ONLY_ROUTES.map((route) => ({ route, base: appServer?.origin ?? origin, auth: true })),
+];
+
+for (const { route, base, auth } of ROUTES) {
   for (const theme of ['light', 'dark']) {
     const page = await browser.newPage();
+    if (auth) await page.authenticate({ username: ADMIN_USER, password: ADMIN_PASSWORD });
     await page.setViewport({ width: 390, height: 844, deviceScaleFactor: 2 });
     await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: theme }]);
-    await page.goto(origin + route, { waitUntil: 'networkidle0' });
+    await page.goto(base + route, { waitUntil: 'networkidle0' });
 
     await page.evaluate(axeSource);
     const results = await page.evaluate(async () => {
@@ -134,6 +153,7 @@ for (const route of [...AUDIT_ROUTES, ...A11Y_ONLY_ROUTES]) {
 
 await browser.close();
 server.close();
+appServer?.stop();
 
 if (failures > 0) {
   console.error(`\ncheck-a11y: ${failures} problem(s).`);

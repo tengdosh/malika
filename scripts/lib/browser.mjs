@@ -45,12 +45,12 @@ const MIME = {
 /**
  * Where the built public site ends up.
  *
- * Adding the SSR adapter for Keystatic moved the prerendered output from dist/
- * to .vercel/output/static; dist/ now holds the intermediate client/server split.
- * Every check serves the same directory a visitor would actually be served.
+ * @astrojs/node splits the build: prerendered pages and assets go to
+ * dist/client, the server bundle to dist/server. Every check serves the same
+ * directory the web server would serve.
  */
 export function resolveDistDir(root = '.') {
-  for (const candidate of ['.vercel/output/static', 'dist/client', 'dist']) {
+  for (const candidate of ['dist/client', 'dist']) {
     if (existsSync(join(root, candidate, 'index.html'))) return candidate;
   }
   return 'dist';
@@ -62,9 +62,9 @@ const COMPRESSIBLE = new Set(['.html', '.css', '.js', '.json', '.xml', '.svg', '
 /**
  * Static server for dist/, with the trailingSlash:'never' → /index.html mapping.
  *
- * Serves brotli/gzip. This is not a nicety: Vercel and Cloudflare Pages both
- * compress by default, and measuring Lighthouse against uncompressed HTML
- * inflated FCP by roughly 700ms — an artefact of the harness, not the site.
+ * Serves brotli/gzip, because the real server is expected to (see README >
+ * Deployment). Measuring Lighthouse against uncompressed HTML inflated FCP by
+ * roughly 700ms — an artefact of the harness, not the site.
  */
 export function serveDist(root = resolveDistDir(), port = 4321) {
   const server = createServer((req, res) => {

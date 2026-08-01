@@ -77,10 +77,16 @@ for (const page of pages.sort()) {
   }
 }
 
-// The CMS routes must render on demand, never be baked into the static output.
-const leaked = globSync(`${dist}/{keystatic,api}/**/*.html`);
+/*
+ * On-demand routes must NOT be baked into the static output. For the CMS that is
+ * about bundle size; for /admin it is about access — a prerendered admin page is
+ * a static file the web server hands to anyone, which is exactly why the auth
+ * middleware needs it rendered on demand.
+ */
+const leaked = globSync(`${dist}/{keystatic,api,admin}/**/*.html`);
 if (leaked.length > 0) {
-  console.error(`  FAIL CMS routes were prerendered into ${dist}: ${leaked.join(', ')}`);
+  console.error(`  FAIL on-demand routes were prerendered into ${dist}: ${leaked.join(', ')}`);
+  console.error('       A prerendered /admin page bypasses the auth middleware entirely.');
   failures += 1;
 }
 

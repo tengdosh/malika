@@ -17,12 +17,14 @@
     "check:schema": "node scripts/check-schema-sync.mjs",
     "check:slugs": "node scripts/check-slug-collisions.mjs",
     "check:cms-isolation": "node scripts/check-keystatic-isolation.mjs",
+    "check:middleware": "node scripts/check-middleware.mjs",
     "check:a11y": "node scripts/check-a11y.mjs",
     "check:behaviour": "node scripts/check-behaviour.mjs",
     "check:analytics": "node scripts/check-analytics.mjs",
     "check:lighthouse": "node scripts/check-lighthouse.mjs",
     "check:fixtures": "node scripts/check-fixtures.mjs",
-    "check": "node scripts/check.mjs"
+    "check": "node scripts/check.mjs",
+    "start": "node dist/server/entry.mjs"
   },
   "dependencies": {
     "@astrojs/mdx": "^4.3.14",
@@ -30,7 +32,6 @@
     "@astrojs/react": "^4.4.2",
     "@astrojs/rss": "^4.0.19",
     "@astrojs/sitemap": "^3.7.3",
-    "@astrojs/vercel": "^9.0.5",
     "@fontsource-variable/alegreya": "^5.3.0",
     "@fontsource-variable/caveat": "^5.3.0",
     "@fontsource/alegreya-sans": "^5.3.0",
