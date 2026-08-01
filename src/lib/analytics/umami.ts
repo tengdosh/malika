@@ -53,29 +53,64 @@ async function totals(
   endAt: number,
 ): Promise<Totals> {
   const url = `${config.apiUrl}/api/websites/${config.websiteId}/stats?startAt=${startAt}&endAt=${endAt}`;
-  const body = (await safeJson(url, { headers })) as Record<string, { value?: number }> | null;
+  const body = (await safeJson(url, { headers })) as Record<string, unknown> | null;
   if (!body) return EMPTY_TOTALS;
 
+  /*
+   * The second thing Umami changed between majors, and the quieter one: v2
+   * returns `{ visits: { value, change } }`, v3 returns `{ visits: 12 }` with the
+   * previous period under a separate `comparison` key. Reading `.value` off a
+   * number yields undefined, so every window silently rendered zero while the
+   * per-page metrics showed real traffic — a stats page that looks broken rather
+   * than one that errors.
+   */
+  const count = (value: unknown): number =>
+    typeof value === 'number' ? value : num((value as { value?: number } | undefined)?.value);
+
   return {
-    visits: num(body.visits?.value),
-    visitors: num(body.visitors?.value),
-    pageviews: num(body.pageviews?.value),
+    visits: count(body.visits),
+    visitors: count(body.visitors),
+    pageviews: count(body.pageviews),
   };
 }
+
+/**
+ * Umami renamed the page-metric type between major versions: `url` in v2,
+ * `path` in v3. Nothing else about the call changed, and the wrong one is a bare
+ * 400 with no message — which reads exactly like "the site has no data yet".
+ *
+ * So the page metric asks for `path` and falls back to `url`. Both versions work
+ * without anyone having to know which is installed, and neither reports an
+ * outage that is really a rename.
+ */
+const PAGE_TYPES = ['path', 'url'] as const;
 
 async function metrics(
   config: UmamiConfig,
   headers: Record<string, string>,
-  type: 'url' | 'referrer' | 'country' | 'city',
+  type: 'page' | 'referrer' | 'country' | 'city',
   startAt: number,
   endAt: number,
   limit = 20,
 ): Promise<{ x: string; y: number }[]> {
-  const url =
-    `${config.apiUrl}/api/websites/${config.websiteId}/metrics` +
-    `?startAt=${startAt}&endAt=${endAt}&type=${type}&limit=${limit}`;
-  const body = await safeJson(url, { headers });
-  return Array.isArray(body) ? (body as { x: string; y: number }[]) : [];
+  const candidates = type === 'page' ? PAGE_TYPES : ([type] as const);
+
+  for (const [index, candidate] of candidates.entries()) {
+    const url =
+      `${config.apiUrl}/api/websites/${config.websiteId}/metrics` +
+      `?startAt=${startAt}&endAt=${endAt}&type=${candidate}&limit=${limit}`;
+    const body = await safeJson(url, { headers });
+
+    // An EMPTY array is not proof the name was right: a server that does not
+    // know `path` can answer 200 with `[]` just as easily as it can 400. Only
+    // the last candidate is allowed to conclude "there is genuinely nothing".
+    const last = index === candidates.length - 1;
+    if (Array.isArray(body) && (body.length > 0 || last)) {
+      return body as { x: string; y: number }[];
+    }
+  }
+
+  return [];
 }
 
 export async function fetchUmami(config: UmamiConfig): Promise<AnalyticsSnapshot | null> {
@@ -95,7 +130,7 @@ export async function fetchUmami(config: UmamiConfig): Promise<AnalyticsSnapshot
 
   // Per-post counts are all-time: a reader wants the total, not a 30-day window.
   const [urls, referrers, places] = await Promise.all([
-    metrics(config, headers, 'url', allTimeStart, now, 200),
+    metrics(config, headers, 'page', allTimeStart, now, 200),
     metrics(config, headers, 'referrer', now - 30 * DAY, now, 10),
     metrics(config, headers, 'country', now - 30 * DAY, now, 10),
   ]);

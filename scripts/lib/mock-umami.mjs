@@ -62,9 +62,24 @@ const server = createServer((req, res) => {
 
   if (url.pathname.endsWith('/metrics')) {
     const type = url.searchParams.get('type');
-    if (type === 'url') return send(Object.entries(POST_VIEWS).map(([x, y]) => ({ x, y })));
+    // Umami renamed the page metric between majors: `url` in v2, `path` in v3.
+    if (type === 'url' || type === 'path') {
+      return send(Object.entries(POST_VIEWS).map(([x, y]) => ({ x, y })));
+    }
     if (type === 'referrer') return send(REFERRERS);
-    return send(COUNTRIES);
+    if (type === 'country' || type === 'city') return send(COUNTRIES);
+
+    /*
+     * Anything else is a 400, exactly as Umami answers it.
+     *
+     * This used to fall through to COUNTRIES, which made every wrong type name
+     * look like a success: a client asking for a metric this server has never
+     * heard of got a plausible-looking list of places back and rendered them as
+     * page views. A mock that answers questions it does not understand cannot
+     * catch the bug where the question is wrong.
+     */
+    res.writeHead(400, { 'content-type': 'application/json' });
+    return res.end('{}');
   }
 
   res.writeHead(404, { 'content-type': 'application/json' });

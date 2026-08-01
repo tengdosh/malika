@@ -363,9 +363,32 @@ try {
 
   /* 7 — statistics degrade rather than error. */
   {
+    // A realistic snapshot, in the shape src/lib/analytics/types.ts actually
+    // defines. Asserting only that the link appears let a wrong field name pass:
+    // the message rendered, it just had no numbers in it.
+    const snapshot = {
+      provider: 'umami',
+      fetchedAt: new Date(0).toISOString(),
+      periods: {
+        d7: { visits: 12, visitors: 9, pageviews: 20 },
+        d30: { visits: 40, visitors: 31, pageviews: 77 },
+        all: { visits: 90, visitors: 70, pageviews: 150 },
+      },
+      pages: [{ path: '/yozuvlar/x', pageviews: 33, visitors: 20 }],
+      referrers: [{ name: 't.me', visitors: 7 }],
+      places: [{ name: 'UZ', visitors: 60 }],
+      placesLabel: 'Davlatlar',
+    };
+    const rendered = formatStats(snapshot, { origin: 'https://x.uz' });
+    ok('the 7-day window shows real numbers', /7 kun: 12 tashrif, 20 koʻrish/.test(rendered), rendered.split('\n')[0]);
+    ok('the 30-day window shows real numbers', /30 kun: 40 tashrif, 77 koʻrish/.test(rendered));
+    ok('the top page and its count appear', rendered.includes('33 — /yozuvlar/x'));
+    ok('the referrer and its count appear', rendered.includes('7 — t.me'));
+    ok('and it links to the full view', rendered.includes('/admin/statistika'));
+
     ok(
-      'an empty snapshot still formats',
-      formatStats({ last7: null, last30: null, pages: [], referrers: [] }, { origin: 'https://x.uz' })
+      'an empty snapshot still formats without throwing',
+      formatStats({ periods: {}, pages: [], referrers: [] }, { origin: 'https://x.uz' })
         .includes('/admin/statistika'),
     );
     const { analyticsConfigured } = await import('../src/lib/analytics/index.ts');

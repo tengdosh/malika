@@ -299,13 +299,21 @@ const COMMANDS = {
   },
 };
 
-/** One readable message: two windows, top posts, top referrers. */
+/**
+ * One readable message: two windows, top posts, top referrers.
+ *
+ * Reads AnalyticsSnapshot exactly as src/lib/analytics/types.ts defines it —
+ * `periods.d7` / `periods.d30`, not a shape of the bot's own invention.
+ */
 export function formatStats(snapshot, config) {
   const lines = [];
   const window = (label, totals) =>
     totals ? `${label}: ${totals.visits} tashrif, ${totals.pageviews} koʻrish` : null;
 
-  lines.push(window('7 kun', snapshot.last7), window('30 kun', snapshot.last30));
+  lines.push(window('7 kun', snapshot.periods?.d7), window('30 kun', snapshot.periods?.d30));
+  if (snapshot.periods?.all) {
+    lines.push(`Jami: ${snapshot.periods.all.pageviews} koʻrish`);
+  }
 
   if (snapshot.pages?.length) {
     lines.push('', 'Eng koʻp oʻqilgani:');
@@ -317,7 +325,7 @@ export function formatStats(snapshot, config) {
   if (snapshot.referrers?.length) {
     lines.push('', 'Qayerdan kelishgan:');
     for (const referrer of snapshot.referrers.slice(0, 5)) {
-      lines.push(`  ${referrer.count} — ${referrer.name}`);
+      lines.push(`  ${referrer.visitors} — ${referrer.name}`);
     }
   }
 

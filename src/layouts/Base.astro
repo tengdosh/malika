@@ -46,7 +46,21 @@ const {
   keywords = [],
 } = Astro.props;
 
+/**
+ * Analytics tag.
+ *
+ * The two supported providers identify a site differently, and getting this
+ * wrong is silent: the script loads, reports no error, and records nothing.
+ *
+ *   Plausible  data-domain="example.uz"
+ *   Umami      data-website-id="<uuid>"
+ *
+ * So `PUBLIC_ANALYTICS_WEBSITE_ID` selects the Umami shape. Both attributes are
+ * emitted only when set, and the tag itself only when a domain is configured —
+ * dev and CI ship no analytics at all.
+ */
 const analyticsDomain = import.meta.env.PUBLIC_ANALYTICS_DOMAIN;
+const analyticsWebsiteId = import.meta.env.PUBLIC_ANALYTICS_WEBSITE_ID;
 const analyticsSrc =
   import.meta.env.PUBLIC_ANALYTICS_SRC ?? 'https://plausible.io/js/script.js';
 
@@ -161,7 +175,13 @@ const fullTitle = title === SITE.name ? title : `${title} — ${SITE.name}`;
          only when a domain is configured, so dev and CI never phone home.
          Point ANALYTICS_SRC at a self-hosted Umami to switch providers. */
       analyticsDomain && import.meta.env.PROD && (
-        <script is:inline defer data-domain={analyticsDomain} src={analyticsSrc} />
+        <script
+          is:inline
+          defer
+          data-domain={analyticsDomain}
+          data-website-id={analyticsWebsiteId}
+          src={analyticsSrc}
+        />
       )
     }
 
