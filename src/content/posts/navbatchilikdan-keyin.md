@@ -6,7 +6,7 @@ description: >-
 pillar: kundalik
 date: 2026-07-18
 featured: true
-cover: ../../assets/covers/navbatchilikdan-keyin.jpg
+cover: ../../assets/posts/navbatchilikdan-keyin.jpg
 coverAlt: Deraza tokchasida turgan choy piyolasi va yonida ochiq qolgan kitob
 ---
 

@@ -25,6 +25,8 @@ import { join } from 'node:path';
 import { openSync } from 'fontkit';
 import { globSync } from 'glob';
 
+import { resolveDistDir } from './browser.mjs';
+
 /** The two faces any text on the site can land in. */
 export const TEXT_FACES = [
   'public/fonts/alegreya-sans/alegreya-sans-latin-400-normal.woff2',
@@ -50,7 +52,7 @@ export const hex = (cp) => 'U+' + cp.toString(16).toUpperCase().padStart(4, '0')
  * @param {{ distDir?: string, root?: string }} options
  * @returns {{ pages: number, distinct: number, warnings: object[], failures: object[] }}
  */
-export function analyseGlyphCoverage({ distDir = 'dist', root = '.' } = {}) {
+export function analyseGlyphCoverage({ distDir = resolveDistDir(), root = '.' } = {}) {
   const pages = globSync(`${distDir}/**/*.html`, { cwd: root });
   if (pages.length === 0) return { pages: 0, distinct: 0, warnings: [], failures: [] };
 

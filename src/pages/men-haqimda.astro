@@ -6,19 +6,24 @@ import Base from '../layouts/Base.astro';
 import PreloadImage from '../components/PreloadImage.astro';
 import Signature from '../components/Signature.astro';
 import { personJsonLd } from '../lib/jsonld';
-import { SITE } from '../lib/site.js';
+import { getSettings } from '../lib/settings';
 
-const about = await getEntry('site', 'men-haqimda');
-if (!about) throw new Error('src/content/site/men-haqimda.md is missing');
+const about = await getEntry('site', 'men_haqimda');
+if (!about) throw new Error('src/content/site/men_haqimda/index.md is missing');
+
+const settings = await getSettings();
 
 const { Content } = await render(about);
-const { portrait, portraitAlt, description } = about.data;
+const { portrait, portraitAlt, description, muassasa, bitirganYil } = about.data;
+
+// Editable in the admin rather than hardcoded. Rendered only when filled in.
+const credentials = [muassasa, bitirganYil].filter(Boolean).join(', ');
 
 const PORTRAIT_WIDTHS = [320, 640];
 const PORTRAIT_SIZES = '(min-width: 52rem) 20rem, min(100vw, 20rem)';
 ---
 
-<Base title="Men haqimda" description={description} jsonLd={[personJsonLd()]}>
+<Base title="Men haqimda" description={description} jsonLd={[personJsonLd(settings)]}>
   {portrait && (
     <Fragment slot="head">
       <PreloadImage src={portrait} widths={PORTRAIT_WIDTHS} sizes={PORTRAIT_SIZES} />
@@ -53,6 +58,7 @@ const PORTRAIT_SIZES = '(min-width: 52rem) 20rem, min(100vw, 20rem)';
   </div>
 
   <div class="shell" style="padding-bottom:clamp(2rem,5vw,3rem)">
-    <p class="footer__credential">{SITE.credential}</p>
+    <p class="footer__credential">{settings.footerBio}</p>
+    {credentials && <p class="footer__credential">{credentials}</p>}
   </div>
 </Base>

@@ -1,9 +1,9 @@
 ---
-import { SOCIAL } from '../lib/site.js';
+import { getSettings } from '../lib/settings';
 
-// TODO(social): renders nothing until a real Telegram handle exists. A subscribe
-// block with a dead button is worse than no subscribe block.
-const telegram = SOCIAL.telegram;
+// Renders nothing until a Telegram handle is set in the admin. A subscribe block
+// with a dead button is worse than no subscribe block.
+const { telegram } = await getSettings();
 ---
 
 {

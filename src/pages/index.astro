@@ -12,15 +12,17 @@ import ReadingCard from '../components/ReadingCard.astro';
 import TelegramCta from '../components/TelegramCta.astro';
 import { getPosts, splitFeatured } from '../lib/entries';
 import { personJsonLd } from '../lib/jsonld';
+import { getSettings } from '../lib/settings';
 import { SITE } from '../lib/site.js';
 
 const posts = await getPosts();
 const { featured, rest } = splitFeatured(posts);
 const rows = rest.slice(0, 6);
 
-const about = await getEntry('site', 'men-haqimda');
-const now = await getEntry('site', 'now');
-const reading = await getEntry('site', 'reading');
+const about = await getEntry('site', 'men_haqimda');
+const now = await getEntry('site', 'hozir');
+const reading = await getEntry('site', 'oqiyapman');
+const settings = await getSettings();
 
 const portrait = about?.data.portrait;
 const book = reading?.data.book;
@@ -30,7 +32,7 @@ const PORTRAIT_WIDTHS = [320, 640];
 const PORTRAIT_SIZES = '(min-width: 52rem) 20rem, min(100vw, 20rem)';
 ---
 
-<Base title={SITE.name} jsonLd={[personJsonLd()]}>
+<Base title={SITE.name} jsonLd={[personJsonLd(settings)]}>
   {portrait && (
     <Fragment slot="head">
       <PreloadImage src={portrait} widths={PORTRAIT_WIDTHS} sizes={PORTRAIT_SIZES} />

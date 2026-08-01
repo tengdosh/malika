@@ -1,14 +1,15 @@
-import { SITE, socialUrls } from './site.js';
+import { SITE } from './site.js';
+import { socialUrls, type SiteSettings } from './settings';
 import type { Entry } from './entries';
 
 /** Stable @id so BlogPosting.author can reference the same Person everywhere. */
 export const PERSON_ID = `${SITE.origin}/#malika`;
 
 /** Kept light on purpose — she is a person, not an institution. */
-export function personJsonLd(): Record<string, unknown> {
-  // sameAs is omitted entirely when no handle is configured. An empty array is
-  // meaningless markup, and a guessed URL is an identity claim about a stranger.
-  const sameAs = socialUrls();
+export function personJsonLd(settings: SiteSettings): Record<string, unknown> {
+  // sameAs is omitted entirely when no handle is set in the admin. An empty array
+  // is meaningless markup, and a wrong URL is an identity claim about a stranger.
+  const sameAs = socialUrls(settings);
 
   return {
     '@context': 'https://schema.org',

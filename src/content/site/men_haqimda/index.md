@@ -4,7 +4,9 @@ description: >-
   Toshkentda yashayman, davolash ishi yoʻnalishini tugatdim va oftalmologiya
   tomon ketyapman. Bu sayt — mening kundaligim.
 updated: 2026-07-26
-portrait: ../../assets/portrait-placeholder.jpg
+muassasa: ''
+bitirganYil: ''
+portrait: ../../../assets/about/portrait.jpg
 portraitAlt: Malika Bobonazarovaning portreti
 ---
 
@@ -35,8 +37,7 @@ haqida savolingiz boʻlsa, iltimos, shifokorga murojaat qiling.
 
 ## Bir qator maʼlumot
 
-Davolash ishi yoʻnalishini tugatdim <!-- TODO(bio): oʻquv muassasasi nomini qoʻshish -->
-<!-- TODO(bio): bitirgan yilni qoʻshish --> va hozir oftalmologiya boʻyicha ordinaturaga
+Davolash ishi yoʻnalishini tugatdim va hozir oftalmologiya boʻyicha ordinaturaga
 tayyorlanyapman. Hali mutaxassis emasman — oʻrganyapman.
 
 ## Bogʻlanish

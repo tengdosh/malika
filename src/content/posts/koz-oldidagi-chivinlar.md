@@ -7,7 +7,7 @@ description: >-
 pillar: koz-sogligi
 date: 2026-06-22
 updated: 2026-07-20
-cover: ../../assets/covers/koz-oldidagi-chivinlar.jpg
+cover: ../../assets/posts/koz-oldidagi-chivinlar.jpg
 coverAlt: Ochiq derazadan tushayotgan yorugʻlik va oq devor
 sources:
   - title: Floaters and Flashes

@@ -543,6 +543,88 @@ scripts/
   shots.mjs             screenshot routes from dist/ for visual review
 ```
 
+## The CMS
+
+[Keystatic](https://keystatic.com) at `/keystatic`. Content stays as Markdown in
+this repo — no database, no second host. Saving commits to GitHub, which triggers
+a deploy; the live site updates in roughly a minute or two.
+
+```bash
+pnpm dev     # local mode: writes straight to the working tree, no GitHub needed
+```
+
+Malika's own guide is [docs/malika-uchun.md](docs/malika-uchun.md).
+
+### Rendering
+
+Keystatic needs server rendering, so the project now has an SSR adapter
+(`@astrojs/vercel`) and `output: 'static'` behaves as hybrid. **Only Keystatic's
+two injected routes render on demand**; every public page is still prerendered.
+Verified in the Vercel output config — `/keystatic` and `/api/keystatic/*` are
+the only entries pointing at the function.
+
+`scripts/check-keystatic-isolation.mjs` asserts the thing that actually matters:
+no public page references React, Keystatic, `astro-island` or any hydration
+runtime, and no public page loads an external script at all. A stray `client:`
+directive would otherwise ship the editor bundle to every reader.
+
+> Because the adapter moved the built output, every check now resolves the
+> served directory through `resolveDistDir()` in `scripts/lib/browser.mjs`:
+> `.vercel/output/static` when present, else `dist/client`, else `dist`.
+
+### Configuration
+
+`keystatic.config.ts` is bundled into the **browser** as well as the server, so
+it can only read `import.meta.env` — reading `process.env` there breaks the admin
+at hydration with `process is not defined`. Every variable it touches is
+therefore `PUBLIC_` prefixed, and none of them are secrets. The GitHub App client
+secret and `KEYSTATIC_SECRET` are read server-side by the injected API route and
+never appear in this file.
+
+Note `PUBLIC_KEYSTATIC_GITHUB_APP_SLUG` — this is Astro, so the prefix is
+`PUBLIC_`, not `NEXT_PUBLIC_`.
+
+### Schema drift
+
+Two schemas describe the same content: the Zod schema in `src/content.config.ts`
+(what the build accepts) and `keystatic.config.ts` (what the admin writes). If
+they diverge, Malika saves a post that fails the build, never sees the error, and
+the site silently stops updating.
+
+`scripts/check-schema-sync.mjs` compares both against one canonical field list
+and fails on any mismatch. It is an explicit test, not a generator: a schema
+change should be a deliberate edit in three places.
+
+### What a CMS writes
+
+Keystatic writes `null` for a cleared date or image and `''` for a cleared text
+field. Zod's `.optional()` rejects both, so **every optional field goes through
+`blankToUndefined`** in `src/content.config.ts`. Without it, clearing a field in
+the admin fails the build — exactly the outcome the whole design is built to
+avoid. A fixture covers this.
+
+Images use `directory: 'src/assets/posts'` with a `publicPath` relative to the
+content file, so `astro:assets` still optimises uploads. A fixture builds a post
+in Keystatic's exact output format and asserts the result has AVIF, WebP and a
+srcset.
+
+## Known gaps
+
+Reported rather than worked around:
+
+- **No cross-field validation in Keystatic.** `fields.array` supports only
+  `length.min`, and `fields.conditional` reshapes the stored data into a
+  discriminated union. So "sources are required when pillar is Koʻz sogʻligʻi"
+  and "coverAlt is required when a cover is set" **cannot** surface in the admin
+  before saving — they fail the build instead. Both are called out in
+  docs/malika-uchun.md so Malika knows what to check. Options if this bites:
+  split health posts into their own Keystatic collection (costs a nested URL and
+  a second sidebar entry), or downgrade the rules to "withhold the post and warn"
+  so a save can never block a deploy. Say which you'd prefer.
+- **Keystatic's own UI chrome is English** ("Add", "Create", "Dashboard"). Every
+  label, description and navigation group we control is Uzbek; the surrounding
+  chrome is not localisable.
+
 ## Upgrade risks
 
 Things most likely to break on a dependency bump, and what to check:
@@ -562,6 +644,31 @@ Things most likely to break on a dependency bump, and what to check:
   Failure is graceful — counters disappear, builds pass — so watch for
   `[analytics]` warnings in the build log rather than a red build.
 - **Astro `astro:build:done` hook** used by the glyph-coverage reporter.
+- **Keystatic + OAuth in production.** Two upstream issues to expect on first
+  deploy: Keystatic sends `redirect_uri` during authorisation but omits it at
+  token exchange, which GitHub rejects (works locally, fails in production with a
+  localhost redirect); and the GitHub App callback URL must match the production
+  URL exactly, because the platform proxies requests and the app sees an internal
+  hostname. Search the Keystatic issue tracker for the patch rather than
+  rewriting the auth flow. If it cannot be made to work in reasonable time, fall
+  back to Keystatic Cloud (free up to 3 users, and editors then need no GitHub
+  account) — do not leave a broken admin.
+
+## Follow-ups the adapter unlocks
+
+Both were shaped by the adapter-free constraint, which no longer applies. Neither
+was changed in this pass:
+
+- **Auth middleware could become Astro middleware.** `/admin/*` is currently
+  protected by platform middleware (`middleware.ts` for Vercel,
+  `functions/admin/_middleware.js` for Cloudflare) because Astro middleware
+  needed an adapter. One Astro middleware would replace both and be exercised by
+  `pnpm dev`, which is the real win — today neither file runs during `pnpm build`
+  or `pnpm check`. The trade-off is that it stops being portable between hosts.
+- **The daily rebuild could become a platform cron.** `.github/workflows/rebuild.yml`
+  pings a deploy hook because Vercel Cron needs a serverless function. With the
+  adapter present, a cron route is now possible. The current approach still works
+  on both hosts, so this is a simplification rather than a fix.
 
 ## Not in scope
 

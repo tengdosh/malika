@@ -3,3 +3,5 @@
 allowBuilds:
   esbuild: true
   sharp: true
+minimumReleaseAgeExclude:
+  - '@keystatic/core@0.6.4'

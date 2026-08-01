@@ -12,10 +12,18 @@
  *   4. Content schema fails when a cover image has no coverAlt
  */
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, rmSync, copyFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import {
+  mkdtempSync,
+  rmSync,
+  copyFileSync,
+  writeFileSync,
+  mkdirSync,
+  readFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { analyseGlyphCoverage as analyse } from './lib/glyph-coverage.mjs';
+import { resolveDistDir } from './lib/browser.mjs';
 
 let failures = 0;
 const cleanups = [];
@@ -79,6 +87,69 @@ try {
       'glyph check accepts the shipped fonts (control: must NOT fail)',
       !fails('node', ['scripts/check-glyphs.mjs', 'public/fonts']),
     );
+  }
+
+  // 2b — A post in exactly the shape Keystatic writes must build, and the image
+  //      it uploaded must still go through astro:assets. This is the fiddliest
+  //      part of Keystatic + Astro: `publicPath` has to stay relative to the
+  //      content file or the image ships unoptimised, or not at all.
+  {
+    const post = 'src/content/posts/zz-fixture-cms.md';
+    const image = 'src/assets/posts/zz-fixture-cms.jpg';
+    copyFileSync('src/assets/posts/navbatchilikdan-keyin.jpg', image);
+    cleanups.push(() => rmSync(image, { force: true }));
+
+    // Empty optionals written the way a CMS writes them: null and ''.
+    writeFileSync(
+      post,
+      [
+        '---',
+        'title: Admin orqali yozilgan',
+        'description: Keystatic yozadigan shaklda saqlangan yozuv.',
+        'pillar: kundalik',
+        'date: 2026-08-01',
+        'updated: null',
+        'draft: false',
+        'featured: false',
+        'evergreen: false',
+        'cover: ../../assets/posts/zz-fixture-cms.jpg',
+        'coverAlt: Sinov uchun rasm',
+        'sources: []',
+        "reviewedBy: ''",
+        '---',
+        '',
+        'Matn.',
+        '',
+      ].join('\n'),
+    );
+    cleanups.push(() => rmSync(post, { force: true }));
+
+    let built = true;
+    try {
+      execFileSync('pnpm', ['exec', 'astro', 'build'], { stdio: 'pipe' });
+    } catch {
+      built = false;
+    }
+    expectFailure('a post in Keystatic output format BUILDS', built);
+
+    if (built) {
+      const html = readFileSync(
+        `${resolveDistDir()}/yozuvlar/zz-fixture-cms/index.html`,
+        'utf8',
+      );
+      expectFailure(
+        'its uploaded image is optimised by astro:assets',
+        /\.avif/.test(html) && /\.webp/.test(html) && /srcset=/.test(html),
+        'avif + webp + srcset',
+      );
+      expectFailure(
+        "Keystatic's empty values (null, '') do not break the schema",
+        html.includes('Admin orqali yozilgan'),
+      );
+    }
+
+    rmSync(post, { force: true });
+    rmSync(image, { force: true });
   }
 
   // 3 — Coverage split: content warns and ships, UI strings fail.

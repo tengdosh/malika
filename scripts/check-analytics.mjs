@@ -17,6 +17,7 @@ import { execFileSync, fork } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 
 import { POST_VIEWS, TOTALS } from './lib/mock-umami.mjs';
+import { resolveDistDir } from './lib/browser.mjs';
 
 let failures = 0;
 const check = (name, ok, detail = '') => {
@@ -61,7 +62,8 @@ const build = (env) => {
 };
 
 const read = (path) => readFileSync(path, 'utf8');
-const SETTINGS = 'src/content/site/sozlamalar.md';
+// Keystatic lays singletons out as <name>/index.<ext>.
+const SETTINGS = 'src/content/site/sozlamalar/index.yaml';
 const originalSettings = read(SETTINGS);
 
 const PORT = 4477;
@@ -78,14 +80,14 @@ try {
   // 1 — working API
   build(WORKING_ENV);
 
-  const post = read('dist/yozuvlar/navbatchilikdan-keyin/index.html');
+  const post = read(`${resolveDistDir()}/yozuvlar/navbatchilikdan-keyin/index.html`);
   check(
     'post byline carries the baked-in count',
     post.includes('1 247 marta oʻqildi'),
     `${POST_VIEWS['/yozuvlar/navbatchilikdan-keyin']} -> "1 247 marta oʻqildi"`,
   );
 
-  const stats = read('dist/admin/statistika/index.html');
+  const stats = read(`${resolveDistDir()}/admin/statistika/index.html`);
   check('stats page shows visit totals', stats.includes('1 030'), `visits ${TOTALS.visits}`);
   check(
     'stats page lists a real post with its count',
@@ -114,8 +116,8 @@ try {
   build(WORKING_ENV);
   check(
     'hisoblagichMinimum hides counts below the threshold',
-    read('dist/yozuvlar/navbatchilikdan-keyin/index.html').includes('marta oʻqildi') &&
-      !read('dist/yozuvlar/nega-oftalmologiya/index.html').includes('marta oʻqildi'),
+    read(`${resolveDistDir()}/yozuvlar/navbatchilikdan-keyin/index.html`).includes('marta oʻqildi') &&
+      !read(`${resolveDistDir()}/yozuvlar/nega-oftalmologiya/index.html`).includes('marta oʻqildi'),
     '1247 shown, 12 hidden',
   );
 
@@ -127,7 +129,7 @@ try {
   build(WORKING_ENV);
   check(
     'hisoblagichKorsatilsin false removes every counter',
-    !read('dist/yozuvlar/navbatchilikdan-keyin/index.html').includes('marta oʻqildi'),
+    !read(`${resolveDistDir()}/yozuvlar/navbatchilikdan-keyin/index.html`).includes('marta oʻqildi'),
   );
   writeFileSync(SETTINGS, originalSettings);
 
@@ -148,11 +150,11 @@ try {
   if (buildSucceeded) {
     check(
       'posts render with no counter when analytics is down',
-      !read('dist/yozuvlar/navbatchilikdan-keyin/index.html').includes('marta oʻqildi'),
+      !read(`${resolveDistDir()}/yozuvlar/navbatchilikdan-keyin/index.html`).includes('marta oʻqildi'),
     );
     check(
       'stats page explains itself instead of showing zeroes',
-      read('dist/admin/statistika/index.html').includes('Hozircha maʼlumot yoʻq'),
+      read(`${resolveDistDir()}/admin/statistika/index.html`).includes('Hozircha maʼlumot yoʻq'),
     );
   }
 } finally {

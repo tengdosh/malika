@@ -7,7 +7,7 @@ pillar: oqish-kasb
 date: 2026-05-30
 updated: 2026-07-24
 evergreen: true
-cover: ../../assets/covers/koz-anatomiyasi.jpg
+cover: ../../assets/posts/koz-anatomiyasi.jpg
 coverAlt: Daftardagi qoʻlda chizilgan sxema va yonida yotgan qalam
 ---
 

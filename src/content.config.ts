@@ -3,7 +3,7 @@ import { glob } from 'astro/loaders';
 
 /**
  * Six pillars. Slugs stay ASCII so they are safe in URLs and filenames;
- * their Uzbek labels live in src/lib/pillars.ts.
+ * their Uzbek labels live in src/lib/pillars.ts and in keystatic.config.ts.
  */
 const pillar = z.enum([
   'kundalik', // daily life, mood, habits — the most frequent
@@ -14,11 +14,30 @@ const pillar = z.enum([
   'esse', // personal essays
 ]);
 
+/**
+ * A CMS does not write `undefined`. Keystatic writes `null` for a cleared date or
+ * image and `''` for a cleared text field, and Zod's `.optional()` rejects both.
+ * Every optional field therefore has to accept null and empty string and
+ * normalise them back to undefined — otherwise clearing a field in the admin
+ * fails the build, which is precisely what must never happen.
+ */
+const blankToUndefined = <T extends z.ZodTypeAny>(schema: T) =>
+  z.preprocess((value) => {
+    if (value === null || value === '') return undefined;
+    return value;
+  }, schema.optional());
+
+const optionalText = blankToUndefined(z.string());
+const optionalDate = blankToUndefined(z.coerce.date());
+const optionalNumber = blankToUndefined(z.coerce.number());
+/** A cleared URL field arrives as '' — treat it as absent rather than invalid. */
+const optionalUrl = blankToUndefined(z.string().url());
+
 const source = z.object({
   title: z.string(),
   publisher: z.string(),
-  year: z.number().optional(),
-  url: z.string().url().optional(),
+  year: optionalNumber,
+  url: optionalUrl,
 });
 
 /**
@@ -29,6 +48,9 @@ const source = z.object({
  *  - A cover image must have alt text.
  *
  * scripts/check-fixtures.mjs proves both still bite, on every CI run.
+ *
+ * NOTE: Keystatic has no cross-field validation, so neither rule can be enforced
+ * in the CMS before saving — see README "Known gaps". They fail the build instead.
  */
 const REQUIRE_SOURCES = 'koz-sogligi yozuvlari uchun kamida bitta manba shart';
 const REQUIRE_COVER_ALT = 'cover berilgan boʻlsa, coverAlt ham shart';
@@ -38,15 +60,18 @@ const entryFields = (image: SchemaContext['image']) => ({
   description: z.string().max(200),
   pillar,
   date: z.coerce.date(),
-  updated: z.coerce.date().optional(),
+  updated: optionalDate,
   draft: z.boolean().default(false),
   featured: z.boolean().default(false),
-  cover: image().optional(),
-  coverAlt: z.string().optional(),
+  cover: blankToUndefined(image()),
+  coverAlt: optionalText,
   sources: z.array(source).default([]),
-  reviewedBy: z.string().optional(),
+  reviewedBy: optionalText,
 });
 
+/* The refinements are applied inline rather than through a generic helper: a
+   generic wrapper erases the inferred object shape, and every downstream
+   `entry.data.pillar` silently becomes `any`. */
 const posts = defineCollection({
   loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/posts' }),
   schema: ({ image }) =>
@@ -78,35 +103,53 @@ const notes = defineCollection({
       }),
 });
 
-/** Singletons: now.md, reading.md, men-haqimda.md */
+/**
+ * Singletons, laid out the way Keystatic writes them: one directory per
+ * singleton containing index.md (with a body) or index.yaml (data only).
+ * generateId strips the /index suffix so getEntry('site', 'hozir') still works.
+ */
 const site = defineCollection({
-  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/site' }),
+  loader: glob({
+    pattern: '**/index.{md,mdx,yaml,yml}',
+    base: './src/content/site',
+    generateId: ({ entry }) => entry.replace(/\/index\.(md|mdx|ya?ml)$/, ''),
+  }),
   schema: ({ image }) =>
     z.object({
       title: z.string(),
-      description: z.string().max(200).optional(),
-      updated: z.coerce.date().optional(),
-      /** now.md: the one short line shown in the homepage "Hozir" strip. */
-      strip: z.string().optional(),
-      /** reading.md: the "Hozir oʻqiyapman" card. */
-      book: z
-        .object({
+      description: blankToUndefined(z.string().max(200)),
+      updated: optionalDate,
+
+      /** hozir: the one short line shown in the homepage "Hozir" strip. */
+      strip: optionalText,
+
+      /** oqiyapman: the "Hozir oʻqiyapman" card. */
+      book: blankToUndefined(
+        z.object({
           title: z.string(),
           author: z.string(),
           startedOn: z.coerce.date(),
-          progress: z.number().min(0).max(100),
+          progress: z.coerce.number().min(0).max(100),
           note: z.string(),
-          cover: image().optional(),
-          coverAlt: z.string().optional(),
-        })
-        .optional(),
-      portrait: image().optional(),
-      portraitAlt: z.string().optional(),
+          cover: blankToUndefined(image()),
+          coverAlt: optionalText,
+        }),
+      ),
 
-      /* sozlamalar.md — switches that belong to Malika, not to a deploy.
-         Named exactly as the CMS fields so the two cannot drift. */
+      /** men_haqimda */
+      portrait: blankToUndefined(image()),
+      portraitAlt: optionalText,
+      muassasa: optionalText,
+      bitirganYil: optionalText,
+
+      /** sozlamalar — switches and links that belong to Malika, not to a deploy.
+          Named exactly as the Keystatic fields so the two cannot drift. */
+      telegram: optionalUrl,
+      instagram: optionalUrl,
+      email: optionalText,
+      footerBio: optionalText,
       hisoblagichKorsatilsin: z.boolean().default(true),
-      hisoblagichMinimum: z.number().min(0).default(0),
+      hisoblagichMinimum: z.coerce.number().min(0).default(0),
     }),
 });
 

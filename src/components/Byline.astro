@@ -1,5 +1,6 @@
 ---
 import { SITE } from '../lib/site.js';
+import { getSettings } from '../lib/settings';
 import { formatDate, isoDate, formatCount } from '../lib/format';
 
 interface Props {
@@ -16,6 +17,7 @@ interface Props {
 }
 
 const { date, updated, reviewedBy, evergreen = false, views } = Astro.props;
+const settings = await getSettings();
 ---
 
 <div class="byline">
@@ -25,7 +27,7 @@ const { date, updated, reviewedBy, evergreen = false, views } = Astro.props;
   <div>
     <p class="byline__name">{SITE.name}</p>
     <p class="byline__line">
-      {SITE.credential}
+      {settings.footerBio}
       {' · '}
       {
         evergreen ? (

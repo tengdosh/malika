@@ -42,6 +42,20 @@ const MIME = {
   '.txt': 'text/plain; charset=utf-8',
 };
 
+/**
+ * Where the built public site ends up.
+ *
+ * Adding the SSR adapter for Keystatic moved the prerendered output from dist/
+ * to .vercel/output/static; dist/ now holds the intermediate client/server split.
+ * Every check serves the same directory a visitor would actually be served.
+ */
+export function resolveDistDir(root = '.') {
+  for (const candidate of ['.vercel/output/static', 'dist/client', 'dist']) {
+    if (existsSync(join(root, candidate, 'index.html'))) return candidate;
+  }
+  return 'dist';
+}
+
 /** Types worth compressing. woff2/avif/webp/jpg/png are already compressed. */
 const COMPRESSIBLE = new Set(['.html', '.css', '.js', '.json', '.xml', '.svg', '.txt']);
 
@@ -52,7 +66,7 @@ const COMPRESSIBLE = new Set(['.html', '.css', '.js', '.json', '.xml', '.svg', '
  * compress by default, and measuring Lighthouse against uncompressed HTML
  * inflated FCP by roughly 700ms — an artefact of the harness, not the site.
  */
-export function serveDist(root = 'dist', port = 4321) {
+export function serveDist(root = resolveDistDir(), port = 4321) {
   const server = createServer((req, res) => {
     const url = decodeURIComponent((req.url ?? '/').split('?')[0]);
     const base = join(root, normalize(url).replace(/^(\.\.[/\\])+/, ''));

@@ -2,6 +2,9 @@
 import { defineConfig } from 'astro/config';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
+import react from '@astrojs/react';
+import keystatic from '@keystatic/astro';
+import vercel from '@astrojs/vercel';
 
 import { SITE } from './src/lib/site.js';
 
@@ -32,7 +35,16 @@ const glyphCoverageReport = () => ({
 
 export default defineConfig({
   site: SITE.origin,
+
+  /**
+   * Still 'static': every public page is prerendered exactly as before. The
+   * adapter exists only so Keystatic's two injected routes (/keystatic and
+   * /api/keystatic/[...params]) can render on demand — they are the only
+   * on-demand routes in the project, and scripts/check-keystatic-isolation.mjs
+   * asserts no Keystatic JS reaches a public page.
+   */
   output: 'static',
+  adapter: vercel(),
   trailingSlash: 'never',
   // The whole stylesheet is small; inlining removes a render-blocking round trip,
   // which is the single biggest LCP lever on a slow mobile connection.
@@ -41,7 +53,14 @@ export default defineConfig({
     mdx(),
     // The admin area is never indexed: excluded here, noindex in the page head,
     // Disallowed in robots.txt, and behind basic auth at the edge.
-    sitemap({ filter: (page) => !new URL(page).pathname.startsWith('/admin') }),
+    sitemap({
+      filter: (page) => {
+        const { pathname } = new URL(page);
+        return !pathname.startsWith('/admin') && !pathname.startsWith('/keystatic');
+      },
+    }),
+    react(),
+    keystatic(),
     glyphCoverageReport(),
   ],
   markdown: {
