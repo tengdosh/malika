@@ -34,10 +34,10 @@ jobs:
       - name: Commit normalised content
         if: github.event_name == 'push'
         run: |
-          if [ -n "$(git status --porcelain src/content)" ]; then
+          if [ -n "$(git status --porcelain src/content docs)" ]; then
             git config user.name  'github-actions[bot]'
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git add src/content
+            git add src/content docs
             git commit -m 'chore(content): normalise Uzbek apostrophes'
             git push
           else

@@ -71,6 +71,7 @@ const STEPS = [
   { name: 'behaviour', label: 'Theme/text-size persistence, reduced motion', cmd: ['node', ['scripts/check-behaviour.mjs']] },
   { name: 'analytics', label: 'Analytics pipeline + outage tolerance', cmd: ['node', ['scripts/check-analytics.mjs']] },
   { name: 'lighthouse', label: 'Lighthouse budget', cmd: ['node', ['scripts/check-lighthouse.mjs']] },
+  { name: 'bot', label: 'Telegram bot flows and guardrails', cmd: ['node', ['scripts/check-bot.mjs']] },
   { name: 'fixtures', label: 'Guardrails still bite', cmd: ['node', ['scripts/check-fixtures.mjs']] },
 ];
 

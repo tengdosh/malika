@@ -16,7 +16,11 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { globSync } from 'glob';
 import { normalizeUzbek } from './lib/normalize-uzbek.mjs';
 
-const DEFAULT_PATTERNS = ['src/content/**/*.{md,mdx,yaml,yml}'];
+const DEFAULT_PATTERNS = [
+  'src/content/**/*.{md,mdx,yaml,yml}',
+  // Uzbek prose written for Malika, not source code — same rule as content.
+  'docs/**/*.md',
+];
 
 const args = process.argv.slice(2);
 const check = args.includes('--check');

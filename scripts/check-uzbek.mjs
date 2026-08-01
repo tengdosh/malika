@@ -24,7 +24,7 @@
 import { readFile } from 'node:fs/promises';
 import { globSync } from 'glob';
 
-const DEFAULT_PATTERNS = ['src/**/*.astro', 'src/lib/**/*.{js,mjs,ts}'];
+const DEFAULT_PATTERNS = ['src/**/*.astro', 'src/lib/**/*.{js,mjs,ts}', 'bot/src/**/*.mjs'];
 
 /**
  * Straight apostrophe or left single quote after o/O/g/G — and followed by a
