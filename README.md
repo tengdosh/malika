@@ -553,6 +553,74 @@ content file, so `astro:assets` still optimises uploads. A fixture builds a post
 in Keystatic's exact output format and asserts the result has AVIF, WebP and a
 srcset.
 
+## Telegram bot
+
+`bot/` is a second client onto this same repository, not a second system. It
+writes Markdown into `src/content/`, commits as `content(bot): <title>` and
+pushes; the existing rebuild picks the commit up. Git stays the single source of
+truth, so a post written in Telegram and a post written in Keystatic are the
+same kind of thing afterwards.
+
+It is deliberately not a CMS replacement. It wins at capture, publishing, stats,
+photo swaps and quick fixes — the things Malika does from a phone. Restructuring
+a long essay and managing a sources list hand off to Keystatic through a deep
+link, because a paragraph editor in a chat window would be worse than a link.
+
+### Running it
+
+```sh
+node bot/src/index.mjs          # or: cd bot && pnpm start
+```
+
+Long polling, so there is no public endpoint to secure, no certificate to renew
+and nothing to break when the site's proxy changes.
+
+`bot/malika-bot.service` is a systemd template. The contract it assumes:
+
+- `WorkingDirectory` is a **git working copy with push access** — the bot runs
+  `fetch`, `rebase`, `commit` and `push` there. A deploy key with write access is
+  the usual arrangement.
+- `BOT_STATE_DIR` outlives restarts. Unfinished posts live there, and a deploy
+  in the middle of a half-written post must not lose it.
+- Nothing needs opening in the firewall.
+
+### Environment
+
+See `.env.example`. Two variables matter more than the rest:
+
+| Variable | |
+|---|---|
+| `TELEGRAM_BOT_TOKEN` | from @BotFather; a secret |
+| `TELEGRAM_ALLOWED_IDS` | **numeric** ids, comma-separated |
+
+The allowlist is the whole of the bot's security. It matches on numeric id and
+never on username, because a username can be given up and re-registered by
+someone else. An id that is not on the list gets **no reply at all** — only a log
+line; a refusal message would confirm the bot exists and is worth probing. With
+the list unset the bot refuses to start rather than serving everyone.
+
+The bot cannot delete a post. `draft: true` hides one and is reversible, and
+"remove cover" clears the frontmatter field without deleting the image. A mis-tap
+on a phone must not destroy work.
+
+### Schema
+
+The bot does not restate the content schema. It derives its field list from
+`src/content.config.ts` at runtime through `scripts/lib/content-fields.mjs`, and
+its cover-path depth from `src/lib/content-paths.js` — the same module
+`keystatic.config.ts` uses. `scripts/check-schema-sync.mjs` compares all three
+clients and fails if the bot stops deriving either one.
+
+### Checks
+
+`scripts/check-bot.mjs` drives whole conversations through the real handlers
+with a fake transport: no token, no network. It covers the allowlist, a complete
+health post written across several messages with Telegram formatting and a
+photo, flow state surviving a restart, a push conflict being reported rather than
+dropped, and `/hozir` and `/kitob` taking one message each. What it cannot cover
+is Telegram's own behaviour — everything from the update object inwards is real,
+the update objects themselves are shaped by hand.
+
 ## Deployment
 
 Self-hosted Node. `@astrojs/node` in `standalone` mode; `output` stays `'static'`,

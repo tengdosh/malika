@@ -64,6 +64,60 @@ keyin brauzer eslab qoladi. Kirish maʼlumotlarini sizga alohida yuboraman.
 
 ---
 
+## 1b. Telegramdagi bot
+
+Koʻp ishni endi brauzersiz, Telegramning oʻzida qilsangiz boʻladi. Botga
+`/yordam` deb yozsangiz, hamma buyruq roʻyxati chiqadi.
+
+| Buyruq | Nima qiladi |
+|---|---|
+| `/yoz` | Yangi yozuv yozish |
+| `/qoralama` | Qoralamalarni koʻrish va birini nashr qilish |
+| `/tahrir` | Yozilgan yozuvni oʻzgartirish |
+| `/hozir` | Bosh sahifadagi «Hozir» qatorini yangilash |
+| `/kitob` | «Hozir oʻqiyapman» kartasini yangilash |
+| `/statistika` | Nechta odam oʻqiganini koʻrish |
+| `/bekor` | Boshlangan ishni toʻxtatish |
+
+### Uzun matn yozish
+
+Telegram bitta xabarga sigʻadigan matnni cheklaydi, shuning uchun **matnni bir
+necha xabarga boʻlib yuboraversangiz boʻladi** — hammasi bitta yozuvga
+qoʻshiladi. Yozib boʻlgach `/tugadi` deb yuboring.
+
+Telegramda qalin, qiya, havola qilib yozsangiz — saytda ham shunday chiqadi.
+Alohida hech narsa qilish shart emas.
+
+Yarmini yozib qoʻyib yuborsangiz ham yoʻqolmaydi: bot sizning yozganingizni
+saqlab turadi, hatto server oʻchib yonsa ham. Keyin davom ettiraverasiz.
+
+### Rasm haqida bitta maslahat
+
+Rasmni **fayl qilib** yuborsangiz sifati yaxshiroq chiqadi. Telegram oddiy
+"rasm" sifatida yuborilgan suratni siqib yuboradi, muqova esa saytda katta
+koʻrinadi. Bot buni sezsa, oʻzi bir marta eslatadi.
+
+Rasm yuborganingizdan keyin bot "rasmda nima bor?" deb soʻraydi. Bu koʻra
+olmaydigan odamlar uchun — tavsifsiz rasm saytda umuman koʻrsatilmaydi.
+
+### Bot nima qila olmaydi
+
+Bularni admin sahifasidan qilasiz, va bu ataylab shunday:
+
+- **Uzun matnni abzatslab tahrirlash.** Chat oynasida uzun matnni koʻchirib
+  yurish noqulay — yarim ishlaydigan tahrirchidan koʻra, toʻgʻri sahifaga
+  havola berish halolroq. `/tahrir` da "Tahrirlash sahifasida ochish" tugmasi
+  aynan oʻsha yozuvni ochadi.
+- **Manbalar roʻyxatini boshqarish.** Yangi yozuvga manba qoʻshish botda
+  ishlaydi, lekin borini oʻzgartirish yoki oʻchirish admin sahifasida qulayroq.
+- **Kitobning oʻzini almashtirish.** `/kitob` foizni va izohni yangilaydi;
+  yangi kitob qoʻyish admin sahifasida.
+- **"Men haqimda" va sozlamalar.**
+
+Bot **yozuvni oʻchira olmaydi**. Eng koʻpi — uni qoralamaga qaytaradi, yaʼni
+saytdan yashiradi. Telefonda tasodifan bosilgan tugma ishingizni yoʻq qilib
+yubormasligi kerak.
+
 ## 2. Yangi yozuv yozish
 
 Chapda **Yozuvlar** guruhida uchta boʻlim bor. Avval qaysi biriga yozayotganingizni

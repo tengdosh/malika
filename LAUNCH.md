@@ -108,6 +108,25 @@ Upgrade risks.
 
 ---
 
+## 6b. Telegram bot
+
+The bot has write access to the repository. Both items below are pre-launch, not
+nice-to-have.
+
+- [ ] `TELEGRAM_BOT_TOKEN` set in the bot's environment, never in a file in the
+      repo. Rotate it with `/revoke` in @BotFather if it has ever been pasted
+      anywhere shared.
+- [ ] `TELEGRAM_ALLOWED_IDS` contains Malika's numeric id **and** yours, and
+      nothing else. @userinfobot reports an id. Never a username: usernames can
+      be given up and re-registered.
+- [ ] Confirm from a third account that the bot replies with **nothing at all**
+      — not an error, not a refusal.
+- [ ] The working copy the bot commits into can actually push (deploy key with
+      write access). Try `/hozir` once and check the commit lands.
+- [ ] `BOT_STATE_DIR` is outside the repository and survives a restart. Start a
+      post, restart the service, and confirm it continues where it left off.
+- [ ] She has the bot's @name, and knows `/yordam` lists everything.
+
 ## 7. Search engines
 
 Only after step 1.
