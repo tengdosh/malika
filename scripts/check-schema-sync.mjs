@@ -17,6 +17,7 @@
  */
 import { existsSync, readFileSync } from 'node:fs';
 import { botFields, keystaticFields, zodFields } from './lib/content-fields.mjs';
+import { CONTENT_PATHS } from '../src/lib/content-paths.js';
 
 /**
  * Canonical frontmatter field names. `content` (the body) is not frontmatter.
@@ -185,6 +186,29 @@ if (existsSync(BOT_ENTRY)) {
   // Failing on its absence would make this check describe a wish rather than the
   // repository.
   console.log('  --   bot/                 not present, nothing to check');
+}
+
+/*
+ * Every content path must declare its layout in the one way Keystatic reads:
+ *
+ *   const dataLocation = path.endsWith('/') ? 'index' : 'outer'
+ *
+ * A collection carries `/*`; a singleton stored as <dir>/index.md must end in a
+ * slash. Drop that slash and Keystatic looks for <dir>.md instead — a file that
+ * has never existed — so the admin silently offers to CREATE the page rather
+ * than opening it. Nothing else notices: Astro reads the same entries by glob,
+ * so the site is fine and only the editor is broken.
+ */
+const badPaths = Object.entries(CONTENT_PATHS).filter(
+  ([, path]) => !path.endsWith('/*') && !path.endsWith('/'),
+);
+if (badPaths.length === 0) {
+  console.log('  ok   content-paths.js     every path declares its layout');
+} else {
+  console.error('  FAIL content-paths.js  path(s) with no layout marker');
+  console.error('       a collection ends with /*, a singleton with /');
+  for (const [name, path] of badPaths) console.error(`       ${name}: ${path}`);
+  failures += 1;
 }
 
 if (failures > 0) {

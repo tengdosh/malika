@@ -19,11 +19,23 @@ export const CONTENT_PATHS = Object.freeze({
   sogliq: 'src/content/posts/sogliq/*',
   notes: 'src/content/notes/*',
 
-  hozir: 'src/content/site/hozir',
-  oqiyapman: 'src/content/site/oqiyapman',
-  men_haqimda: 'src/content/site/men_haqimda',
-  maxfiylik: 'src/content/site/maxfiylik',
-  sozlamalar: 'src/content/site/sozlamalar',
+  /*
+   * The trailing slash is load-bearing, not styling.
+   *
+   *   const dataLocation = path.endsWith('/') ? 'index' : 'outer'
+   *
+   * is how Keystatic decides between `<path>/index.md` and `<path>.md`. Without
+   * it every singleton looked for a file that has never existed, so the admin
+   * offered to CREATE each page instead of opening it — while the collections,
+   * which carry their own `/*`, worked perfectly. The site reads these entries
+   * through Astro, so nothing was broken anywhere except the one place nobody
+   * could reach until the CMS had a login.
+   */
+  hozir: 'src/content/site/hozir/',
+  oqiyapman: 'src/content/site/oqiyapman/',
+  men_haqimda: 'src/content/site/men_haqimda/',
+  maxfiylik: 'src/content/site/maxfiylik/',
+  sozlamalar: 'src/content/site/sozlamalar/',
 });
 
 /** `src/content/posts/*` -> `src/content/posts`; a singleton path is already a dir. */
