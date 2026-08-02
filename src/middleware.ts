@@ -1,6 +1,6 @@
 import { defineMiddleware } from 'astro:middleware';
 
-import { stripBase } from './lib/site.js';
+import { stripBase, withBase } from './lib/site.js';
 
 /**
  * HTTP basic auth for the whole management area.
@@ -97,5 +97,41 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // The admin area is never cached and never indexed, whatever the host does.
   response.headers.set('cache-control', 'no-store');
   response.headers.set('x-robots-tag', 'noindex, nofollow');
-  return response;
+
+  return injectInsecureCryptoShim(path, response);
 });
+
+/**
+ * Keystatic hashes file contents in the browser, and browsers only expose
+ * `crypto.subtle` in a secure context. Served over plain HTTP the editor throws
+ *
+ *     Cannot read properties of undefined (reading 'digest')
+ *
+ * on the first entry it opens and hangs on a spinner — with the sidebar rendered,
+ * which is what makes it look like a slow load rather than a broken one.
+ *
+ * So a digest-only shim is injected ahead of the editor's own script. It checks
+ * for the real implementation first and stands aside when there is one, which
+ * means this costs nothing the moment HTTPS is on and can then be deleted.
+ *
+ * It is a stopgap, not a fix. It does not make the connection private — the
+ * password still crosses the network in clear text until 443 reaches this
+ * server. See README > Telegram bot / Deployment.
+ */
+async function injectInsecureCryptoShim(path: string, response: Response): Promise<Response> {
+  if (!path.startsWith('/keystatic')) return response;
+  if (!(response.headers.get('content-type') ?? '').includes('text/html')) return response;
+
+  const html = await response.text();
+  const tag = `<script src="${withBase('/keystatic-insecure-polyfill.js')}"></script>`;
+  // The page has no <head>: Astro emits `<!DOCTYPE html><style>…` and goes
+  // straight into scripts, so the doctype is the only reliable anchor.
+  const patched = /<!doctype html>/i.test(html)
+    ? html.replace(/<!doctype html>/i, (match) => `${match}${tag}`)
+    : tag + html;
+
+  const headers = new Headers(response.headers);
+  // The body changed length, and a stale content-length truncates the page.
+  headers.delete('content-length');
+  return new Response(patched, { status: response.status, statusText: response.statusText, headers });
+}
