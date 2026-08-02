@@ -1,0 +1,17 @@
+---
+/**
+ * The address Malika is given: /cms.
+ *
+ * Keystatic's Astro integration hardcodes its own route (`/keystatic/[...params]`)
+ * and takes no options, so this is a redirect rather than a second mount — the
+ * editor itself has to live where its client-side router expects to be, or every
+ * link inside it breaks.
+ *
+ * On demand, not prerendered, so src/middleware.ts runs and asks for the
+ * password BEFORE the redirect. A prerendered redirect would hand the location
+ * out to anyone.
+ */
+export const prerender = false;
+
+return Astro.redirect('/keystatic', 302);
+---

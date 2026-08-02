@@ -3,7 +3,7 @@ import { defineMiddleware } from 'astro:middleware';
 import { stripBase } from './lib/site.js';
 
 /**
- * HTTP basic auth for /admin/*.
+ * HTTP basic auth for the whole management area.
  *
  * Astro middleware, not platform config: it runs as part of the app, so it works
  * on any host and can be covered by a fixture — scripts/check-middleware.mjs
@@ -44,9 +44,25 @@ function safeEqual(a: string, b: string): boolean {
 const env = (key: string): string | undefined =>
   process.env[key] ?? (import.meta.env as Record<string, string | undefined>)[key];
 
+/**
+ * Everything behind the password.
+ *
+ * `/keystatic` and its API used to be reachable by anyone who knew the address.
+ * That was survivable only while the CMS was in GitHub mode and could not
+ * authenticate anybody — GitHub was doing the gatekeeping. In `local` storage
+ * there is no login at all: whoever opens the page can rewrite the site. So the
+ * CMS is protected here, by the same credentials as /admin, and it fails closed
+ * the same way.
+ *
+ * `/cms` is the address Malika is given; it redirects into /keystatic and is
+ * listed so the prompt appears before the redirect rather than after it.
+ */
+const PROTECTED = ['/admin', '/keystatic', '/api/keystatic', '/cms'];
+
 export const onRequest = defineMiddleware(async (context, next) => {
   const path = stripBase(context.url.pathname);
-  if (!path.startsWith('/admin')) return next();
+  const guarded = PROTECTED.some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
+  if (!guarded) return next();
 
   const user = env('ADMIN_USER');
   const password = env('ADMIN_PASSWORD');

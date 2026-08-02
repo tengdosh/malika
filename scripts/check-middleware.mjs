@@ -77,8 +77,30 @@ const get = (origin, path, headers = {}) =>
     // The guard must not leak onto anything else.
     const home = await get(server.origin, '/');
     check('public pages are unaffected', home.status === 200, `/ -> ${home.status}`);
-    const cms = await get(server.origin, '/keystatic');
-    check('the CMS is unaffected', cms.status === 200, `/keystatic -> ${cms.status}`);
+    const post = await get(server.origin, '/yozuvlar');
+    check('the post index is unaffected', post.status === 200, `/yozuvlar -> ${post.status}`);
+
+    /*
+     * The CMS is behind the SAME password.
+     *
+     * This check used to assert the opposite — that /keystatic was reachable —
+     * which was only ever safe because Keystatic was in GitHub storage and could
+     * not authenticate anyone by itself. In `local` storage there is no login at
+     * all, so an open /keystatic means anyone who knows the address can rewrite
+     * the site. If this assertion is ever flipped back, that is the hole it
+     * reopens.
+     */
+    for (const path of ['/keystatic', '/api/keystatic/tree', '/cms']) {
+      const guarded = await get(server.origin, path);
+      check(`${path} demands a password`, guarded.status === 401, `got ${guarded.status}`);
+
+      const opened = await get(server.origin, path, { authorization: basic(USER, PASS) });
+      check(
+        `${path} opens with the right password`,
+        opened.status !== 401 && opened.status !== 403,
+        `got ${opened.status}`,
+      );
+    }
   } finally {
     server.stop();
   }
