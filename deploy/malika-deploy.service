@@ -1,0 +1,10 @@
+[Unit]
+Description=Publish loop — commit CMS edits, pull, validate, build, push
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/malika-deploy.sh
+# A cold build with an install can take a few minutes.
+TimeoutStartSec=900

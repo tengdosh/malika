@@ -553,6 +553,20 @@ content file, so `astro:assets` still optimises uploads. A fixture builds a post
 in Keystatic's exact output format and asserts the result has AVIF, WebP and a
 srcset.
 
+## Three clients, one publish loop
+
+Content can now be written from three places — the CMS at `/cms`, the Telegram
+bot, and a plain push to `main` — and all three go through the same loop:
+commit, pull, **validate, build**, push, restart. `deploy/README.md` explains
+the ordering and why it is that way round; the short version is that an earlier
+version discarded uncommitted CMS edits, and the version after that published
+content that did not build.
+
+The CMS runs in Keystatic's `local` storage, so it needs no GitHub account —
+which also means it has no login of its own, which is why `/admin`,
+`/keystatic`, `/api/keystatic` and `/cms` are all behind the same basic auth and
+fail closed without it.
+
 ## Telegram bot
 
 `bot/` is a second client onto this same repository, not a second system. It
