@@ -2,7 +2,7 @@
 title: Hozir
 description: Malika hozir nima bilan band — oʻqish, kutish va yozgi odatlar.
 updated: 2026-07-28
-strip: >-
+strip: 'CMS sinovi — bu qator /cms dan yozildi.'
   Ordinaturaga hujjat topshirdim va javob kutyapman. Shu orada koʻp oʻqiyapman,
   kam gapiraman — va bu menga yoqyapti.
 ---
